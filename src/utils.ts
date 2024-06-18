@@ -90,3 +90,10 @@ export function resolveAllFiles(children: TreeItem[]) {
     })
     return fileEntries
 }
+
+export function isFileSystemFileHandle(handle: FileSystemHandle): handle is FileSystemFileHandle {
+    return handle.kind === 'file'
+}
+export function isFileSystemDirectoryHandle(handle: FileSystemHandle): handle is FileSystemDirectoryHandle {
+    return handle.kind === 'directory'
+}

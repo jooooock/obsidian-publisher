@@ -9,14 +9,14 @@
 
   <!-- 进度条-->
   <div class="progress-wrapper">
-    <a-progress v-if="btnLoading" :percent="uploadPercent" status="active" />
+    <a-progress v-if="btnLoading" :percent="uploadPercent" status="active"/>
     <p class="path d-flex" v-if="uploadingFileEntry">
       当前正在上传:
       <span class="mx-2">({{ syncedFilesCount }} / {{ checkedFilesCount }})</span>
       <span class="text-info me-2 uploading-filename">{{ uploadingFileEntry.path.join('/') }}</span>
-      <span>({{readableFileSize(uploadingFileEntry.file.size)}})</span>
+      <span>({{ readableFileSize(uploadingFileEntry.file.size) }})</span>
       <span class="flex-grow-1"></span>
-      <span>{{uploadedFilesSize}} / {{totalFileSize}}</span>
+      <span>{{ uploadedFilesSize }} / {{ totalFileSize }}</span>
     </p>
   </div>
 
@@ -50,15 +50,15 @@
       <template #title>排序</template>
       <a-popover v-model:open="sortVisible" trigger="click" placement="rightTop">
         <template #content>
-          <Sort :sort="sort" @change="onSortChange" />
+          <Sort :sort="sort" @change="onSortChange"/>
         </template>
         <button type="button" class="btn btn-sm hover-gray">
-          <ArrowUpNarrowWide />
+          <ArrowUpNarrowWide/>
         </button>
       </a-popover>
     </a-tooltip>
 
-    <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{totalFileSize}})</span>
+    <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{ totalFileSize }})</span>
 
     <div class="flex-grow-1"></div>
 
@@ -87,14 +87,20 @@
 import {computed, reactive, ref, watch} from 'vue'
 import Tree from "@/components/Tree.vue"
 import Sort from "@/components/Sort.vue"
-import {ChevronsDownUp, ChevronsUpDown, Loader, ArrowUpNarrowWide} from "lucide-vue-next"
-import { message } from 'ant-design-vue'
-import {readableFileSize, resolveAllFiles, uploadFile} from '@/utils'
-import {SortMethod, TreeItem, TreeItemDirectory, TreeItemFile, UploadFileData} from "@/types";
+import {ArrowUpNarrowWide, ChevronsDownUp, ChevronsUpDown, Loader} from "lucide-vue-next"
+import {message} from 'ant-design-vue'
+import {
+  isFileSystemDirectoryHandle,
+  isFileSystemFileHandle,
+  readableFileSize,
+  resolveAllFiles,
+  uploadFile
+} from '@/utils'
+import type {SortMethod, TreeItem, TreeItemDirectory, UploadFileData} from "@/types";
 
 
-let rootDirectoryEntry: FileSystemDirectoryHandle | null = null
-let publishUploadFileEntry: FileSystemFileHandle | null = null
+let rootDirectoryHandle: FileSystemDirectoryHandle | null = null
+let publishUploadFileHandle: FileSystemFileHandle | null = null
 
 
 let treeNodes = reactive<TreeItem[]>([])
@@ -128,7 +134,7 @@ let uploadingFileEntry = computed(() => {
   return resolveAllFiles(treeNodes).find(entry => entry.uploadState === 'uploading')
 })
 // 已上传文件占选中文件的百分比
-let uploadPercent = computed(() => Math.floor(syncedFilesCount.value / checkedFilesCount.value * 100 ))
+let uploadPercent = computed(() => Math.floor(syncedFilesCount.value / checkedFilesCount.value * 100))
 
 // 已选中文件的总大小
 let totalFileSize = computed(() => {
@@ -144,7 +150,7 @@ let _uploadFileData: UploadFileData | null = null
 // 选择仓库目录
 async function selectDirectory() {
   try {
-    rootDirectoryEntry = await window.showDirectoryPicker({mode: 'readwrite'})
+    rootDirectoryHandle = await window.showDirectoryPicker({mode: 'readwrite'})
   } catch (e) {
     console.warn(e)
     return
@@ -152,8 +158,8 @@ async function selectDirectory() {
 
   // 检查选择的目录是否是仓库目录(根目录有一个 .obsidian 目录)
   try {
-    const obsidianDirectoryHandle = await rootDirectoryEntry.getDirectoryHandle('.obsidian')
-    publishUploadFileEntry = await obsidianDirectoryHandle.getFileHandle('.publish_upload.json', {create: true})
+    const obsidianDirectoryHandle = await rootDirectoryHandle.getDirectoryHandle('.obsidian')
+    publishUploadFileHandle = await obsidianDirectoryHandle.getFileHandle('.publish_upload.json', {create: true})
 
     _uploadFileData = await readUploadData()
   } catch (e: any) {
@@ -165,9 +171,9 @@ async function selectDirectory() {
     return
   }
 
-  vaultName.value = rootDirectoryEntry.name
+  vaultName.value = rootDirectoryHandle.name
 
-  let nodes = await convertEntryToTreeNodes(rootDirectoryEntry)
+  let nodes = await convertEntryToTreeNodes(rootDirectoryHandle)
   resolveFileCountInTreeNode(nodes)
 
   treeNodes.length = 0
@@ -175,15 +181,15 @@ async function selectDirectory() {
 }
 
 async function saveUploadData(contents: string) {
-  const writable = await publishUploadFileEntry!.createWritable();
+  const writable = await publishUploadFileHandle!.createWritable();
   await writable.write(contents);
   await writable.close();
 }
 
 async function readUploadData(): Promise<UploadFileData> {
   return new Promise(async (resolve, reject) => {
-    if (publishUploadFileEntry) {
-      const file = await publishUploadFileEntry.getFile()
+    if (publishUploadFileHandle) {
+      const file = await publishUploadFileHandle.getFile()
       const fileReader = new FileReader()
       fileReader.addEventListener('load', event => {
         try {
@@ -208,38 +214,38 @@ let _id = 0
 async function convertEntryToTreeNodes(directoryEntry: FileSystemDirectoryHandle, level = 0, path: number[] = []) {
   const nodes: TreeItem[] = []
 
-  for await (const entry of directoryEntry.values()) {
+  for await (const handle of directoryEntry.values()) {
     // 忽略顶层目录下面的隐藏文件/目录
-    if (level === 0 && entry.name.startsWith('.')) {
+    if (level === 0 && handle.name.startsWith('.')) {
       continue
     }
     let id = _id++
 
-    if (entry.kind === 'file') {
-      const filePath = await rootDirectoryEntry!.resolve(entry)
+    if (isFileSystemFileHandle(handle)) {
+      const filePath = await rootDirectoryHandle!.resolve(handle)
       const hasUploaded = _uploadFileData!.files.some(file => file.path.join('/') === filePath!.join('/'))
 
       nodes.push({
         pid: path.concat(id),
         id: id,
         kind: 'file',
-        name: entry.name,
+        name: handle.name,
         level: level,
         checked: false,
-        file: await entry.getFile(),
+        file: await handle.getFile(),
         path: filePath!,
         uploadState: hasUploaded ? "synced" : '',
       })
-    } else if (entry.kind === 'directory') {
+    } else if (isFileSystemDirectoryHandle(handle)) {
       nodes.push({
         pid: path.concat(id),
         id: id,
         kind: 'directory',
-        name: entry.name,
+        name: handle.name,
         level: level,
         collapsed: true,
         checked: false,
-        children: await convertEntryToTreeNodes(entry, level + 1, path.concat(id)),
+        children: await convertEntryToTreeNodes(handle, level + 1, path.concat(id)),
         fileCount: 0,
       })
     }
@@ -444,6 +450,7 @@ async function upload() {
   font-size: 14px;
   color: #9ea2a6;
 }
+
 .a-text-info {
   font-size: 14px;
   color: #9ea2a6;

@@ -14,3 +14,7 @@ interface ShowDirectoryPickerOptions {
 interface Window {
   showDirectoryPicker: (options: ShowDirectoryPickerOptions) => Promise<FileSystemDirectoryHandle>
 }
+
+interface FileSystemDirectoryHandle {
+  values: () => IterableIterator<FileSystemHandle>
+}

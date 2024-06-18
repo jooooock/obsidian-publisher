@@ -14,7 +14,7 @@
 
       <!-- 缩进-->
       <div class="tree-indent d-flex align-self-stretch" v-if="item.level > 0">
-        <div class="tree-indent-unit" v-for="n of item.level"></div>
+        <div class="tree-indent-unit" v-for="n of item.level" :key="n"></div>
       </div>
 
       <!-- 目录展开/收起指示器-->
