@@ -1,5 +1,5 @@
 import type {PublishCache, TreeItemFile} from "@/types";
-import {readFileContent, writeFileContent} from "@/utils";
+import {calcFileHash, readFileContent, writeFileContent} from "@/utils";
 import {reactive} from "vue";
 
 export const publishCache = reactive<PublishCache>({
@@ -25,15 +25,15 @@ export async function loadCache(obsidianDirectoryHandle: FileSystemDirectoryHand
  * 添加新文件
  * @param fileEntry
  */
-export function addNewFile(fileEntry: TreeItemFile) {
+export async function addNewFile(fileEntry: TreeItemFile) {
     const targetFile = publishCache!.files.find(file => file.path.join('/') === fileEntry.path.join('/'))
     if (targetFile) {
         // 更新hash
-        targetFile.hash = ''
+        targetFile.hash = await calcFileHash(fileEntry.file)
     } else {
         publishCache?.files.push({
             path: fileEntry.path,
-            hash: ''
+            hash: await calcFileHash(fileEntry.file)
         })
     }
 }

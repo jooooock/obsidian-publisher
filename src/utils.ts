@@ -1,7 +1,8 @@
 import * as qiniuJS from 'qiniu-js'
 import mime from 'mime'
 import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
-
+import sha256 from 'crypto-js/sha256';
+import hex from 'crypto-js/enc-hex'
 
 /**
  * 格式化文件大小
@@ -157,5 +158,32 @@ export async function writeFileContent(fileHandle: FileSystemFileHandle, content
 export function resolveFileCountInTreeNode(treeNodes: TreeItem[]) {
     travelTreeDirectoryNodes(treeNodes, (node) => {
         node.fileCount = resolveAllFiles(node.children).length
+    })
+}
+
+/**
+ * 计算文件hash
+ * @param file
+ */
+export async function calcFileHash(file: File) {
+    const fileType = mime.getType(file.name)
+    if (fileType && fileType.startsWith('text/')) {
+        // 文本文件可以计算真正的 hash
+        const text = await readTextFileContent(file)
+        return sha256(text).toString(hex)
+    } else {
+        // 二进制文件可能会比较大，用 lastModified + size 组合代替 hash
+        return `${file.lastModified}${file.size}`
+    }
+}
+
+function readTextFileContent(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.addEventListener('load', event => {
+            resolve(event.target!.result as string)
+        })
+        reader.addEventListener('error', reject)
+        reader.readAsText(file, 'utf-8')
     })
 }

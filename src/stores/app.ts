@@ -1,15 +1,14 @@
 import {computed, reactive, ref} from "vue";
 import {
+    calcFileHash,
     isFileSystemDirectoryHandle,
     isFileSystemFileHandle,
     readableFileSize,
-    readFileContent,
     resolveAllFiles,
     resolveFileCountInTreeNode,
     uploadFile,
-    writeFileContent
 } from "@/utils"
-import type {PublishCache, SortMethod, TreeItem} from "@/types";
+import type {SortMethod, TreeItem} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 
@@ -79,8 +78,12 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
         if (isFileSystemFileHandle(handle)) {
             const currentFilePath = await rootDirectoryHandle!.resolve(handle)
 
-            // todo: 这里还要校验 hash
-            const hasUploaded = publishCache!.files.some(file => file.path.join('/') === currentFilePath!.join('/'))
+            let hasUploaded = false
+            const fileCache = publishCache.files.find(file => file.path.join('/') === currentFilePath!.join('/'))
+            if (fileCache) {
+                const hash = await calcFileHash(await handle.getFile())
+                hasUploaded = fileCache.hash === hash
+            }
 
             nodes.push({
                 pid: path.concat(id),
@@ -129,7 +132,7 @@ export async function upload() {
             const {code, msg} = await uploadFile(fileEntry)
             if (code === 0) {
                 fileEntry.uploadState = 'synced'
-                addNewFile(fileEntry)
+                await addNewFile(fileEntry)
             } else {
                 console.warn(msg)
                 fileEntry.uploadState = 'failed'
