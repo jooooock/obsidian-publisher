@@ -13,6 +13,7 @@
   "dependencies": {
     "ant-design-vue": "4.x",
     "bootstrap": "^5.3.3",
+    "dayjs": "^1.11.11",
     "lucide-vue-next": "^0.394.0",
     "mime": "^4.0.3",
     "qiniu-js": "3.x",

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {ref, watch} from "vue";
 import {ArrowUpNarrowWide, ChevronsDownUp, ChevronsUpDown, Loader} from "lucide-vue-next"
+import * as dayjs from 'dayjs'
 import SortOptions from "@/components/SortOptions.vue"
 import {
   checkedFilesCount,
@@ -15,6 +16,7 @@ import {
 } from "@/stores/app";
 import type {SortMethod, TreeItem} from "@/types";
 import {resolveAllFiles} from "@/utils";
+import {publishCache} from '@/stores/publish-cache'
 
 
 const sortVisible = ref(false)
@@ -90,6 +92,10 @@ function updateAllDirectoryCheckState() {
 
   updateDirectoryCheckState(treeNodes)
 }
+
+function formatLastPublishTime(timestamp: number) {
+  return dayjs.default(timestamp).format('YYYY-MM-DD HH:mm:ss')
+}
 </script>
 
 <template>
@@ -131,7 +137,7 @@ function updateAllDirectoryCheckState() {
     </a-tooltip>
 
     <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{ totalFileSize }})</span>
-
+    <span class="a-text-info">上次上传时间: {{formatLastPublishTime(publishCache.lastPublishAt)}}</span>
     <div class="flex-grow-1"></div>
 
     <button class="btn btn-primary d-flex align-items-center" @click="upload"

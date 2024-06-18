@@ -11,6 +11,7 @@ import {
 } from "@/utils"
 import type {PublishCache, SortMethod, TreeItem} from "@/types";
 import {message} from 'ant-design-vue'
+import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 
 
 export let treeNodes = reactive<TreeItem[]>([])
@@ -21,34 +22,31 @@ export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
 
 let rootDirectoryHandle: FileSystemDirectoryHandle | null = null
-let publishCacheFileHandle: FileSystemFileHandle | null = null
+
 let manifestFileHandle: FileSystemFileHandle | null = null
 let optionsFileHandle: FileSystemFileHandle | null = null
-
-let _publishCache: PublishCache | null = null
 
 
 // 选择仓库目录
 export async function selectDirectory() {
     try {
         rootDirectoryHandle = await window.showDirectoryPicker({mode: 'readwrite'})
-    } catch (e) {
+    } catch (e: any) {
         console.warn(e)
+        message.warn(e.message)
         return
     }
 
     // 检查选择的目录是否是仓库目录(仓库目录下会有一个 .obsidian 目录)
     try {
         const obsidianDirectoryHandle = await rootDirectoryHandle.getDirectoryHandle('.obsidian')
-        publishCacheFileHandle = await obsidianDirectoryHandle.getFileHandle('.publish_cache.json', {create: true})
-
-        const publishCacheContent = await readFileContent(publishCacheFileHandle)
-        _publishCache = JSON.parse(publishCacheContent || '{"files":[]}')
+        await loadCache(obsidianDirectoryHandle)
     } catch (e: any) {
         if (e.name === 'NotFoundError') {
-            alert('选择的目录不是一个合法的仓库目录(仓库目录通常会包含一个 .obsidian 隐藏目录)')
+            message.error('选择的目录不是一个合法的仓库目录(仓库目录通常会包含一个 .obsidian 隐藏目录)')
         } else {
             console.error(e)
+            message.error(e.message)
         }
         return
     }
@@ -79,8 +77,10 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
         let id = _id++
 
         if (isFileSystemFileHandle(handle)) {
-            const filePath = await rootDirectoryHandle!.resolve(handle)
-            const hasUploaded = _publishCache!.files.some(file => file.path.join('/') === filePath!.join('/'))
+            const currentFilePath = await rootDirectoryHandle!.resolve(handle)
+
+            // todo: 这里还要校验 hash
+            const hasUploaded = publishCache!.files.some(file => file.path.join('/') === currentFilePath!.join('/'))
 
             nodes.push({
                 pid: path.concat(id),
@@ -90,7 +90,7 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
                 level: level,
                 checked: false,
                 file: await handle.getFile(),
-                path: filePath!,
+                path: currentFilePath!,
                 uploadState: hasUploaded ? "synced" : '',
             })
         } else if (isFileSystemDirectoryHandle(handle)) {
@@ -116,50 +116,37 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
 export const isPublishing = ref(false)
 
 export async function upload() {
-    const checkedFiles = resolveAllFiles(treeNodes).filter(entry => entry.checked)
     isPublishing.value = true
 
-    const uploadData: PublishCache = {
-        files: [],
-        lastPublishAt: 0,
-    }
-
-    for (const entry of checkedFiles) {
-        if (entry.uploadState === 'synced') {
-            uploadData.files.push({
-                path: entry.path,
-                hash: '',
-            })
+    for (const fileEntry of checkedFiles.value) {
+        if (fileEntry.uploadState === 'synced') {
             continue
         }
 
-        entry.uploadState = 'uploading'
+        fileEntry.uploadState = 'uploading'
 
         try {
-            const {code, msg} = await uploadFile(entry)
+            const {code, msg} = await uploadFile(fileEntry)
             if (code === 0) {
-                entry.uploadState = 'synced'
-                uploadData.files.push({
-                    path: entry.path,
-                    hash: '',
-                })
+                fileEntry.uploadState = 'synced'
+                addNewFile(fileEntry)
             } else {
                 console.warn(msg)
-                entry.uploadState = 'failed'
+                fileEntry.uploadState = 'failed'
             }
         } catch (e) {
             // 上传出错
             console.error(e)
-            entry.uploadState = 'failed'
+            fileEntry.uploadState = 'failed'
         }
     }
 
-    // 已上传文件数据写入磁盘
-    uploadData.lastPublishAt = Date.now()
-    await writeFileContent(publishCacheFileHandle!, JSON.stringify(uploadData, null, 2))
+    // 已上传文件数据写入磁盘缓存
+    publishCache!.lastPublishAt = Date.now()
+    await saveCache()
 
     isPublishing.value = false
-    message.success('上传完毕')
+    // message.success('上传完毕')
 }
 
 
@@ -169,7 +156,11 @@ export const totalFilesCount = computed(() => {
 })
 // 选中文件数
 export const checkedFilesCount = computed(() => {
-    return resolveAllFiles(treeNodes).filter(entry => entry.checked).length
+    return checkedFiles.value.length
+})
+// 已选中的文件列表
+export const checkedFiles = computed(() => {
+    return resolveAllFiles(treeNodes).filter(entry => entry.checked)
 })
 // 已选中文件的总大小
 export const totalFileSize = computed(() => {
