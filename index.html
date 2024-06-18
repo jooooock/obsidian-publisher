@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Obsidian Publish Manager</title>
+    <link href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html,body {
+            height: 100vh;
+            overflow: hidden;
+        }
+        #app {
+            height: 100%;
+            overflow: scroll;
+        }
+        #app::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" class="container"></div>
+<script src="src/main.ts" type="module"></script>
+</body>
+</html>
