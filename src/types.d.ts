@@ -1,7 +1,7 @@
 type TreeItemKind = 'file' | 'directory'
 
 // 文件上传状态
-type UploadState = '' | 'uploading' | 'synced' | 'failed'
+type UploadState = '' | 'uploading' | 'synced' | 'failed' | 'dirty'
 
 
 interface TreeItemCommon {

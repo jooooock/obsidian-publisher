@@ -2,7 +2,7 @@
   <div v-for="item in renderedTreeNodes" :key="item.id">
     <!-- 节点的渲染-->
     <div class="d-flex align-items-center tree-node" @click="onEntryClick(item)" :class="{checked: item.checked}">
-      <!-- 选择框-->
+      <!-- 文件选择框-->
       <div style="margin-inline: 10px" @click.stop>
         <a-checkbox
             v-model:checked="item.checked"
@@ -12,18 +12,27 @@
         />
       </div>
 
-      <!-- 缩进-->
+      <!-- 目录层级缩进-->
       <div class="tree-indent d-flex align-self-stretch" v-if="item.level > 0">
         <div class="tree-indent-unit" v-for="n of item.level" :key="n"></div>
       </div>
 
       <!-- 目录展开/收起指示器-->
       <div class="switcher d-flex justify-content-center">
-        <ChevronRight v-if="item.kind === 'directory'" :size="16" class="switcher-icon" :class="item.collapsed ? 'collapsed' : 'expand'" />
+        <ChevronRight
+            v-if="item.kind === 'directory'"
+            :size="16"
+            class="switcher-icon"
+            :class="item.collapsed ? 'collapsed' : 'expand'"
+        />
       </div>
 
-      <!-- 图标-->
-      <Icon :item="item" :size="16" style="margin-inline: 8px" />
+      <!-- 文件图标-->
+      <div style="margin-inline: 8px">
+        <FolderClosed :size="16" v-if="item.kind === 'directory' && item.collapsed"/>
+        <FolderOpen :size="16" v-else-if="item.kind === 'directory' && !item.collapsed"/>
+        <File :size="16" v-else/>
+      </div>
 
       <div class="d-flex flex-grow-1 align-items-center tree-node-title px-2">
         <!-- 目录/文件名-->
@@ -37,15 +46,19 @@
         <!-- 同步状态-->
         <a-tooltip :mouseEnterDelay=".5">
           <template #title>上传成功</template>
-          <CircleCheckBig v-if="entryHasSynced(item)" :size="18" class="icon-status-success ms-2" />
+          <CircleCheckBig v-if="itemHasSynced(item)" :size="18" class="icon-status-success ms-2"/>
         </a-tooltip>
         <a-tooltip :mouseEnterDelay=".5">
           <template #title>上传失败</template>
-          <TriangleAlert v-if="entryHasFailed(item)" :size="18" class="icon-status-failed ms-2" />
+          <TriangleAlert v-if="itemHasFailed(item)" :size="18" class="icon-status-failed ms-2"/>
         </a-tooltip>
         <a-tooltip :mouseEnterDelay=".5">
           <template #title>上传中</template>
-          <Loader v-if="entryIsUploading(item)" :size="18" color="dimgray" class="spin ms-2" />
+          <Loader v-if="itemIsUploading(item)" :size="18" color="dimgray" class="spin ms-2"/>
+        </a-tooltip>
+        <a-tooltip :mouseEnterDelay=".5">
+          <template #title>文件内容已变化</template>
+          <Repeat2 v-if="itemHasDirty(item)" :size="18" class="icon-status-dirty ms-2"/>
         </a-tooltip>
 
         <!-- 文件大小-->
@@ -69,9 +82,17 @@
 </template>
 
 <script setup lang="ts">
-import Icon from './Icon.vue'
 import {computed} from "vue";
-import {CircleCheckBig, Loader, TriangleAlert, ChevronRight} from "lucide-vue-next";
+import {
+  ChevronRight,
+  CircleCheckBig,
+  File,
+  FolderClosed,
+  FolderOpen,
+  Loader,
+  Repeat2,
+  TriangleAlert
+} from "lucide-vue-next";
 import {readableFileSize, resolveAllFiles} from '@/utils'
 import {SortMethod, TreeItem} from "@/types";
 
@@ -150,40 +171,46 @@ function onCheckChange(item: TreeItem, checked: boolean) {
   emit('check:change', item, checked)
 }
 
-function entryFileSize(entry: TreeItem) {
-  if (entry.kind === 'file') {
-    return entry.file.size
+function entryFileSize(item: TreeItem) {
+  if (item.kind === 'file') {
+    return item.file.size
   } else {
-    const fileEntries = resolveAllFiles(entry.children)
+    const fileEntries = resolveAllFiles(item.children)
     return fileEntries.reduce((total, item) => total + item.file.size, 0)
   }
 }
 
 
-function entryHasSynced(entry: TreeItem) {
-  if (entry.kind === 'file' && entry.uploadState === 'synced') {
+function itemHasSynced(item: TreeItem) {
+  if (item.kind === 'file' && item.uploadState === 'synced') {
     return true
   }
-  if (entry.kind === 'directory') {
-    const allFileEntries = resolveAllFiles(entry.children)
+  if (item.kind === 'directory') {
+    const allFileEntries = resolveAllFiles(item.children)
     return allFileEntries.length > 0 && allFileEntries.every(entry => entry.uploadState === 'synced')
   }
 }
-function entryIsUploading(entry: TreeItem) {
-  if (entry.kind === 'file' && entry.uploadState === 'uploading') {
+
+function itemIsUploading(item: TreeItem) {
+  if (item.kind === 'file' && item.uploadState === 'uploading') {
     return true
   }
-  if (entry.kind === 'directory') {
-    return resolveAllFiles(entry.children).some(entry => entry.uploadState === 'uploading')
+  if (item.kind === 'directory') {
+    return resolveAllFiles(item.children).some(entry => entry.uploadState === 'uploading')
   }
 }
-function entryHasFailed(entry: TreeItem) {
-  if (entry.kind === 'file' && entry.uploadState === 'failed') {
+
+function itemHasFailed(item: TreeItem) {
+  if (item.kind === 'file' && item.uploadState === 'failed') {
     return true
   }
-  if (entry.kind === 'directory') {
-    return resolveAllFiles(entry.children).some(entry => entry.uploadState === 'failed')
+  if (item.kind === 'directory') {
+    return resolveAllFiles(item.children).some(entry => entry.uploadState === 'failed')
   }
+}
+
+function itemHasDirty(item: TreeItem) {
+  return item.kind === 'file' && item.uploadState === 'dirty';
 }
 </script>
 
@@ -235,9 +262,11 @@ function entryHasFailed(entry: TreeItem) {
   & .switcher-icon {
     transition: all .2s;
   }
+
   & .switcher-icon.collapsed {
     transform: rotate(0);
   }
+
   & .switcher-icon.expand {
     transform: rotate(90deg);
   }
@@ -247,6 +276,7 @@ function entryHasFailed(entry: TreeItem) {
 .size-info {
   font-size: 14px;
 }
+
 .size-info {
   width: 100px;
   text-align: right;
@@ -259,11 +289,16 @@ function entryHasFailed(entry: TreeItem) {
     color: #29aa63;
   }
 }
+
 .icon-status-failed {
   color: #db3a3a;
 
   &:hover {
     color: red;
   }
+}
+
+.icon-status-dirty {
+  color: #0d6efd;
 }
 </style>

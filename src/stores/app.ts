@@ -8,7 +8,7 @@ import {
     resolveFileCountInTreeNode,
     uploadFile,
 } from "@/utils"
-import type {SortMethod, TreeItem} from "@/types";
+import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 
@@ -78,11 +78,15 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
         if (isFileSystemFileHandle(handle)) {
             const currentFilePath = await rootDirectoryHandle!.resolve(handle)
 
-            let hasUploaded = false
+            let fileUploadState: UploadState = ''
             const fileCache = publishCache.files.find(file => file.path.join('/') === currentFilePath!.join('/'))
             if (fileCache) {
                 const hash = await calcFileHash(await handle.getFile())
-                hasUploaded = fileCache.hash === hash
+                if (fileCache.hash === hash) {
+                    fileUploadState = 'synced'
+                } else {
+                    fileUploadState = 'dirty'
+                }
             }
 
             nodes.push({
@@ -94,7 +98,7 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
                 checked: false,
                 file: await handle.getFile(),
                 path: currentFilePath!,
-                uploadState: hasUploaded ? "synced" : '',
+                uploadState: fileUploadState,
             })
         } else if (isFileSystemDirectoryHandle(handle)) {
             nodes.push({
