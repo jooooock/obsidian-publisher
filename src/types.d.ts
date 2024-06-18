@@ -31,11 +31,11 @@ export type TreeItem = TreeItemFile | TreeItemDirectory
 // 排序选项
 export type SortMethod = 'A-Z' | 'Z-A' | '1-9' | '9-1'
 
-interface UploadFileItem {
+interface PublishFileItem {
     path: string[]
     hash: string
 }
-export interface UploadFileData {
-    files: UploadFileItem[]
-    lastUploadAt: number
+export interface PublishCache {
+    files: PublishFileItem[]
+    lastPublishAt: number
 }

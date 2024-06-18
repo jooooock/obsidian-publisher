@@ -1,7 +1,12 @@
 import * as qiniuJS from 'qiniu-js'
 import mime from 'mime'
-import {TreeItem, TreeItemFile} from "@/types";
+import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 
+
+/**
+ * 格式化文件大小
+ * @param bytes 字节数
+ */
 export function readableFileSize(bytes: number) {
     if (bytes < 1024 ** 1) {
         return `${bytes} B`
@@ -21,6 +26,7 @@ if (import.meta.env.DEV) {
     host = 'http://localhost:8000'
 }
 
+// 上传文件
 export async function uploadFile(fileEntry: TreeItemFile) {
     const file = fileEntry.file
     const filePath = fileEntry.path.join('/')
@@ -96,4 +102,60 @@ export function isFileSystemFileHandle(handle: FileSystemHandle): handle is File
 }
 export function isFileSystemDirectoryHandle(handle: FileSystemHandle): handle is FileSystemDirectoryHandle {
     return handle.kind === 'directory'
+}
+
+/**
+ * 遍历树中的目录节点
+ */
+export function travelTreeDirectoryNodes(treeNodes: TreeItem[], fn: (node: TreeItemDirectory) => void) {
+    treeNodes.forEach(node => {
+        if (node.kind === 'directory') {
+            fn(node)
+
+            travelTreeDirectoryNodes(node.children, fn)
+        }
+    })
+    return treeNodes
+}
+
+/**
+ * 读取文件内容
+ */
+export async function readFileContent(fileHandle: FileSystemFileHandle): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+        if (fileHandle) {
+            const file = await fileHandle.getFile()
+            const fileReader = new FileReader()
+            fileReader.addEventListener('load', event => {
+                try {
+                    const result = event.target!.result as string
+                    resolve(result)
+                } catch (e) {
+                    reject(e)
+                }
+            })
+            fileReader.addEventListener('error', reject)
+            fileReader.readAsText(file, 'utf-8')
+        } else {
+            reject(new Error('file handle is empty'))
+        }
+    })
+}
+
+/**
+ * 写入文件内容
+ */
+export async function writeFileContent(fileHandle: FileSystemFileHandle, content: string) {
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+}
+
+/**
+ * 计算目录包含的文件数
+ */
+export function resolveFileCountInTreeNode(treeNodes: TreeItem[]) {
+    travelTreeDirectoryNodes(treeNodes, (node) => {
+        node.fileCount = resolveAllFiles(node.children).length
+    })
 }
