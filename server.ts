@@ -1,5 +1,4 @@
 // @ts-nocheck
-
 import { serveDir } from "jsr:@std/http@^0.224.1/file-server"
 
 Deno.serve((req: Request) => {
