@@ -3,9 +3,8 @@ import {reactive, ref} from "vue";
 import type {SiteOptions} from '@/types'
 import {uploadFile} from '@/utils'
 import {message} from 'ant-design-vue'
+import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
 
-
-const open = ref(false)
 
 const form: SiteOptions = reactive({
   siteName: '',
@@ -25,13 +24,27 @@ const form: SiteOptions = reactive({
   slidingWindowMode: false,
 })
 
+const open = ref(false)
+
+async function openPanel() {
+  open.value = true
+
+  const options = await readDiskFileContent('.obsidian/publisher/options.json')
+  if (options) {
+    Object.assign(form, JSON.parse(options))
+  }
+}
+
 const btnLoading = ref(false)
 
 async function save() {
   btnLoading.value = true
 
   try {
-    await uploadFile(JSON.stringify(form), 'options.json')
+    await uploadFile('options.json', JSON.stringify(form, null, 2))
+    await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(form, null, 2))
+    open.value = false
+    message.success('保存成功')
   } catch (e: any) {
     message.error(e.message)
   } finally {
@@ -41,7 +54,7 @@ async function save() {
 </script>
 
 <template>
-  <button class="btn btn-outline-secondary mx-2" @click="open = true">网站配置</button>
+  <button class="btn btn-outline-secondary mx-2" @click="openPanel">网站配置</button>
 
   <a-drawer
       v-model:open="open"

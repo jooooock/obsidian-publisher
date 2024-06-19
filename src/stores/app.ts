@@ -1,8 +1,6 @@
 import {computed, reactive, ref} from "vue";
 import {
     calcFileHash,
-    isFileSystemDirectoryHandle,
-    isFileSystemFileHandle,
     readableFileSize,
     readTextFileContent,
     resolveAllFiles,
@@ -13,7 +11,8 @@ import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
-import {parseMarkdown} from "@/parser";
+import {parseMarkdown} from "@/parser"
+import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle} from '@/stores/fs'
 
 
 export let treeNodes = reactive<TreeItem[]>([])
@@ -23,40 +22,25 @@ export const hideEmptyDir = ref(false)
 export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
 
-let rootDirectoryHandle: FileSystemDirectoryHandle | null = null
-
-
-let optionsFileHandle: FileSystemFileHandle | null = null
-
 
 // 选择仓库目录
 export async function selectDirectory() {
+    let vaultDirectoryHandle: FileSystemDirectoryHandle
+
     try {
-        rootDirectoryHandle = await window.showDirectoryPicker({mode: 'readwrite'})
+        vaultDirectoryHandle = await selectVault()
+
+        await loadCache()
+        await loadManifest()
     } catch (e: any) {
         console.warn(e)
         message.warn(e.message)
         return
     }
 
-    // 检查选择的目录是否是仓库目录(仓库目录下会有一个 .obsidian 目录)
-    try {
-        const obsidianDirectoryHandle = await rootDirectoryHandle.getDirectoryHandle('.obsidian')
-        await loadCache(obsidianDirectoryHandle)
-        await loadManifest(obsidianDirectoryHandle)
-    } catch (e: any) {
-        if (e.name === 'NotFoundError') {
-            message.error('选择的目录不是一个合法的仓库目录(仓库目录通常会包含一个 .obsidian 隐藏目录)')
-        } else {
-            console.error(e)
-            message.error(e.message)
-        }
-        return
-    }
+    vaultName.value = vaultDirectoryHandle.name
 
-    vaultName.value = rootDirectoryHandle.name
-
-    let nodes = await convertDirectoryToTreeNodes(rootDirectoryHandle)
+    let nodes = await convertDirectoryToTreeNodes(vaultDirectoryHandle, vaultDirectoryHandle)
     resolveFileCountInTreeNode(nodes)
 
     treeNodes.length = 0
@@ -69,7 +53,7 @@ let _id = 0
 /**
  * 递归解析目录下面的所有文件，组成树状结构返回
  */
-async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryHandle, level = 0, path: number[] = []) {
+async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle, directoryHandle: FileSystemDirectoryHandle, level = 0, path: number[] = []) {
     const nodes: TreeItem[] = []
 
     for await (const handle of directoryHandle.values()) {
@@ -80,7 +64,7 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
         let id = _id++
 
         if (isFileSystemFileHandle(handle)) {
-            const currentFilePath = await rootDirectoryHandle!.resolve(handle)
+            const currentFilePath = await rootHandle.resolve(handle)
 
             let fileUploadState: UploadState = ''
             const fileCache = publishCache.files.find(file => file.path.join('/') === currentFilePath!.join('/'))
@@ -113,7 +97,7 @@ async function convertDirectoryToTreeNodes(directoryHandle: FileSystemDirectoryH
                 level: level,
                 collapsed: true,
                 checked: false,
-                children: await convertDirectoryToTreeNodes(handle, level + 1, path.concat(id)),
+                children: await convertDirectoryToTreeNodes(rootHandle, handle, level + 1, path.concat(id)),
                 fileCount: 0,
             })
         }
@@ -139,10 +123,10 @@ export async function upload() {
         try {
             const file = fileItem.file
             const path = fileItem.path.join('/')
-            await uploadFile(file, path)
+            await uploadFile(path, file)
 
-            // md 文件需要解析
-            if (fileItem.path.join('/').endsWith('.md')) {
+            // 解析文件元数据
+            if (path.endsWith('.md')) {
                 const doc = await readTextFileContent(file)
                 publishManifest[path] = parseMarkdown(doc)
             } else {
@@ -165,7 +149,7 @@ export async function upload() {
     await saveManifest()
 
     // 上传 manifest 文件
-    await uploadFile(JSON.stringify(publishManifest), 'manifest.json')
+    await uploadFile('manifest.json', JSON.stringify(publishManifest))
 
     isPublishing.value = false
     // message.success('上传完毕')

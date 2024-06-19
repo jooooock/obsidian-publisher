@@ -28,7 +28,7 @@ export function readableFileSize(bytes: number) {
  * @param file 文件对象或文件内容
  * @param path 文件保存路径
  */
-export async function uploadFile(file: File | string, path: string) {
+export async function uploadFile(path: string, file: File | string) {
     let fileObj: File
     if (typeof file === 'string') {
         const fileName = path.split('/').at(-1)!
@@ -63,12 +63,7 @@ export function resolveAllFiles(children: TreeItem[]) {
     return fileEntries
 }
 
-export function isFileSystemFileHandle(handle: FileSystemHandle): handle is FileSystemFileHandle {
-    return handle.kind === 'file'
-}
-export function isFileSystemDirectoryHandle(handle: FileSystemHandle): handle is FileSystemDirectoryHandle {
-    return handle.kind === 'directory'
-}
+
 
 /**
  * 遍历树中的目录节点
@@ -84,38 +79,6 @@ export function travelTreeDirectoryNodes(treeNodes: TreeItem[], fn: (node: TreeI
     return treeNodes
 }
 
-/**
- * 读取文件内容
- */
-export async function readFileContent(fileHandle: FileSystemFileHandle): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-        if (fileHandle) {
-            const file = await fileHandle.getFile()
-            const fileReader = new FileReader()
-            fileReader.addEventListener('load', event => {
-                try {
-                    const result = event.target!.result as string
-                    resolve(result)
-                } catch (e) {
-                    reject(e)
-                }
-            })
-            fileReader.addEventListener('error', reject)
-            fileReader.readAsText(file, 'utf-8')
-        } else {
-            reject(new Error('file handle is empty'))
-        }
-    })
-}
-
-/**
- * 写入文件内容
- */
-export async function writeFileContent(fileHandle: FileSystemFileHandle, content: string) {
-    const writable = await fileHandle.createWritable();
-    await writable.write(content);
-    await writable.close();
-}
 
 /**
  * 计算目录包含的文件数

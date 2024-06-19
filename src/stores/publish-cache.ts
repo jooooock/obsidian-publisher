@@ -1,24 +1,27 @@
 import type {PublishCache, TreeItemFile} from "@/types";
-import {calcFileHash, readFileContent, writeFileContent} from "@/utils";
+import {calcFileHash} from "@/utils";
 import {reactive} from "vue";
+import {readDiskFileContent, writeDiskFileContent} from '@/stores/fs'
+
 
 export const publishCache = reactive<PublishCache>({
     files: [],
     lastPublishAt: 0
 })
 
-let publishCacheFileHandle: FileSystemFileHandle | null = null
-
 /**
  * 加载缓存
- * @param obsidianDirectoryHandle .obsidian目录句柄
  */
-export async function loadCache(obsidianDirectoryHandle: FileSystemDirectoryHandle) {
-    publishCacheFileHandle = await obsidianDirectoryHandle.getFileHandle('.publish_cache.json', {create: true})
+export async function loadCache() {
+    // 清空
+    publishCache.files.length = 0
+    publishCache.lastPublishAt = 0
 
-    const publishCacheContent = await readFileContent(publishCacheFileHandle)
-    const result = JSON.parse(publishCacheContent || '{"files":[], "lastPublishAt":0}')
-    Object.assign(publishCache, result)
+
+    const content = await readDiskFileContent('.obsidian/publisher/cache.json')
+    if (content) {
+        Object.assign(publishCache, JSON.parse(content))
+    }
 }
 
 /**
@@ -43,6 +46,6 @@ export async function addNewFile(fileEntry: TreeItemFile) {
  */
 export async function saveCache() {
     console.log('开始同步到磁盘缓存')
-    await writeFileContent(publishCacheFileHandle!, JSON.stringify(publishCache, null, 2))
+    await writeDiskFileContent('.obsidian/publisher/cache.json', JSON.stringify(publishCache, null, 2))
     console.log('写入完毕')
 }
