@@ -3,7 +3,8 @@ import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 import sha256 from 'crypto-js/sha256';
 import hex from 'crypto-js/enc-hex'
 import * as qiniu from '@/storage/qiniu'
-import {fetchTokenURL, authorization} from '@/stores/app'
+import {siteAuthorization} from '@/stores/publish-authorization'
+
 
 /**
  * 格式化文件大小
@@ -28,7 +29,6 @@ export function readableFileSize(bytes: number) {
  * 上传文件
  * @param file 文件对象或文件内容
  * @param path 文件保存路径
- * @param host
  */
 export async function uploadFile(path: string, file: File | string) {
     let fileObj: File
@@ -42,7 +42,7 @@ export async function uploadFile(path: string, file: File | string) {
     }
 
     try {
-        const token = await qiniu.getUploadToken(path, fetchTokenURL.value)
+        const token = await qiniu.getUploadToken(path, siteAuthorization.fetchTokenURL, siteAuthorization.authorization)
         return await qiniu.uploadFile(fileObj, path, token)
     } catch (e: any) {
         throw e
@@ -120,4 +120,15 @@ export function readTextFileContent(file: File): Promise<string> {
         reader.addEventListener('error', reject)
         reader.readAsText(file, 'utf-8')
     })
+}
+
+export function genAuthorization(): string {
+    const secret = crypto.getRandomValues(new Uint8Array(20)).reduce((result, num) => {
+        return result + String.fromCharCode(num)
+    }, '')
+    const payload = {
+        secret: secret,
+        expired: Date.now() + 1000 * 60 * 60 * 24 * 7, // 默认有效期 7 天
+    }
+    return btoa(JSON.stringify(payload))
 }

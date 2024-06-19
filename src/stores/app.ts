@@ -11,6 +11,7 @@ import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
+import {loadSiteAuthorization, siteAuthorization} from '@/stores/publish-authorization'
 import {parseMarkdown} from "@/parser"
 import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle} from '@/stores/fs'
 
@@ -23,10 +24,6 @@ export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
 
 
-export const fetchTokenURL = ref(import.meta.env.DEV ? 'http://localhost:8000' : '')
-export const authorization = ref('')
-
-
 // 选择仓库目录
 export async function selectDirectory() {
     let vaultDirectoryHandle: FileSystemDirectoryHandle
@@ -36,6 +33,7 @@ export async function selectDirectory() {
 
         await loadCache()
         await loadManifest()
+        await loadSiteAuthorization()
     } catch (e: any) {
         console.warn(e)
         message.warn(e.message)
@@ -115,8 +113,8 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
 export const isPublishing = ref(false)
 
 export async function upload() {
-    if (!fetchTokenURL.value) {
-        message.warn('请先配置网站地址')
+    if (!siteAuthorization.fetchTokenURL || !siteAuthorization.authorization) {
+        message.warn('请先配置网站认证信息')
         return
     }
 

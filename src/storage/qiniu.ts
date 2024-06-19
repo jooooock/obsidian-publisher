@@ -6,10 +6,14 @@ import mime from "mime";
  * 获取资源上传token
  * @param filePath 文件保存路径
  * @param host
+ * @param authorization
  */
-export async function getUploadToken(filePath: string, host: string): Promise<string> {
+export async function getUploadToken(filePath: string, host: string, authorization: string): Promise<string> {
     const {code, data: token, msg} = await fetch(`${host}/api/qiniu/token?path=${encodeURIComponent(filePath)}`, {
         method: 'get',
+        headers: {
+            Authorization: authorization,
+        }
     }).then(resp => resp.json())
     if (code !== 0) {
         // token 获取失败

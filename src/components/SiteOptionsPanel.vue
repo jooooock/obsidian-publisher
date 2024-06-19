@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import {reactive, ref, watch} from "vue";
-import type {SiteOptions} from '@/types'
-import {uploadFile} from '@/utils'
 import {message} from 'ant-design-vue'
-import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
-import {authorization, fetchTokenURL} from '@/stores/app'
+import {Atom} from 'lucide-vue-next'
 import type {Rule} from "ant-design-vue/es/form";
+import type {SiteOptions} from '@/types'
+import {genAuthorization, uploadFile} from '@/utils'
+import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
+import {siteAuthorization, type SiteAuthorization} from '@/stores/publish-authorization'
 
-
-interface SiteAuthorizationConfig {
-  fetchTokenURL: string
-  authorization: string
-}
 
 const formRef = ref(null)
-const form: SiteOptions & SiteAuthorizationConfig = reactive({
+const form: SiteOptions & SiteAuthorization = reactive({
   siteName: '',
   indexFile: '',
   logo: '',
@@ -31,21 +27,24 @@ const form: SiteOptions & SiteAuthorizationConfig = reactive({
   showGraph: true,
   slidingWindowMode: false,
 
-  fetchTokenURL: fetchTokenURL.value,
-  authorization: authorization.value,
+  fetchTokenURL: siteAuthorization.fetchTokenURL,
+  authorization: siteAuthorization.authorization,
 })
 
 watch(() => form.fetchTokenURL, (value: string) => {
-  fetchTokenURL.value = value
+  siteAuthorization.fetchTokenURL = value
 })
 watch(() => form.authorization, (value: string) => {
-  authorization.value = value
+  siteAuthorization.authorization = value
 })
 
 const rules: Record<string, Rule[]> = {
   fetchTokenURL: [
     { required: true, message: '请填写网站地址', trigger: 'blur' },
     { required: true, validator: validateURL, trigger: 'change' }
+  ],
+  authorization: [
+    { required: true, message: '请填写Authorization', trigger: 'blur' },
   ]
 }
 async function validateURL(_rule: Rule, value: string) {
@@ -67,6 +66,10 @@ async function validateURL(_rule: Rule, value: string) {
   }
 }
 
+function autoGen() {
+  form.authorization = genAuthorization()
+}
+
 
 const open = ref(false)
 
@@ -83,9 +86,6 @@ const btnLoading = ref(false)
 
 async function save() {
   (formRef.value! as any).validate().then(async () => {
-    fetchTokenURL.value = form.fetchTokenURL
-    authorization.value = form.authorization
-
     btnLoading.value = true
 
     try {
@@ -95,6 +95,7 @@ async function save() {
 
       await uploadFile('options.json', JSON.stringify(options, null, 2))
       await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(options, null, 2))
+      await writeDiskFileContent('.obsidian/publisher/authorization.json', JSON.stringify(siteAuthorization, null, 2))
       open.value = false
       message.success('保存成功')
     } catch (e: any) {
@@ -127,10 +128,21 @@ async function save() {
         </a-col>
         <a-col :span="12">
           <a-form-item label="Authorization" name="authorization">
-            <a-input v-model:value="form.authorization" placeholder="authorization" autocomplete="off"/>
+            <a-input-group compact>
+              <a-input v-model:value="form.authorization" readonly="readonly" placeholder="authorization" autocomplete="off" style="width: calc(100% - 32px)"/>
+              <a-tooltip title="重新生成">
+                <a-button @click="autoGen">
+                  <template #icon><Atom /></template>
+                </a-button>
+              </a-tooltip>
+            </a-input-group>
           </a-form-item>
         </a-col>
       </a-row>
+
+      <p class="text-danger">以上配置不会上传到服务器，仅保存在本地</p>
+      <hr>
+
       <a-row :gutter="16">
         <a-col :span="12">
           <a-form-item label="网站名称" name="siteName">
