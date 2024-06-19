@@ -4,6 +4,7 @@ import type {SiteOptions} from '@/types'
 import {uploadFile} from '@/utils'
 import {message} from 'ant-design-vue'
 import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
+import {authorization, fetchTokenURL} from '@/stores/app'
 
 
 const form: SiteOptions = reactive({
@@ -66,20 +67,32 @@ async function save() {
     <a-form :model="form" layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
+          <a-form-item label="Token获取地址" name="fetchTokenURL">
+            <a-input type="url" v-model:value="fetchTokenURL" placeholder="fetchTokenURL" autocomplete="off"/>
+          </a-form-item>
+        </a-col>
+        <a-col :span="12">
+          <a-form-item label="Authorization" name="authorization">
+            <a-input v-model:value="authorization" placeholder="authorization" autocomplete="off"/>
+          </a-form-item>
+        </a-col>
+      </a-row>
+      <a-row :gutter="16">
+        <a-col :span="12">
           <a-form-item label="网站名称" name="siteName">
-            <a-input v-model:value="form.siteName" placeholder="输入网站名称"/>
+            <a-input v-model:value="form.siteName" placeholder="输入网站名称" autocomplete="off"/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
           <a-form-item label="首页文件" name="indexFile">
-            <a-input v-model:value="form.indexFile" placeholder="输入首页文件"/>
+            <a-input v-model:value="form.indexFile" placeholder="输入首页文件" autocomplete="off"/>
           </a-form-item>
         </a-col>
       </a-row>
       <a-row :gutter="16">
         <a-col :span="12">
           <a-form-item label="Logo" name="logo">
-            <a-input v-model:value="form.logo" placeholder="输入logo"/>
+            <a-input v-model:value="form.logo" placeholder="输入logo" autocomplete="off"/>
           </a-form-item>
         </a-col>
         <a-col :span="12">

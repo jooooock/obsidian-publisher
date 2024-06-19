@@ -45,7 +45,6 @@ export async function addNewFile(fileEntry: TreeItemFile) {
  * 保存缓存
  */
 export async function saveCache() {
-    console.log('开始同步到磁盘缓存')
     await writeDiskFileContent('.obsidian/publisher/cache.json', JSON.stringify(publishCache, null, 2))
-    console.log('写入完毕')
+    console.log('发布缓存写入磁盘')
 }

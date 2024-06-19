@@ -23,6 +23,10 @@ export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
 
 
+export const fetchTokenURL = ref(import.meta.env.DEV ? 'http://localhost:8000' : '')
+export const authorization = ref('')
+
+
 // 选择仓库目录
 export async function selectDirectory() {
     let vaultDirectoryHandle: FileSystemDirectoryHandle
@@ -148,11 +152,15 @@ export async function upload() {
 
     await saveManifest()
 
-    // 上传 manifest 文件
-    await uploadFile('manifest.json', JSON.stringify(publishManifest))
+    try {
+        // 上传 manifest 文件
+        await uploadFile('manifest.json', JSON.stringify(publishManifest))
+        message.success('发布完成')
+    } catch (e: any) {
+        message.error(`manifest.json 文件上传失败: ${e.message}`)
+    }
 
     isPublishing.value = false
-    // message.success('上传完毕')
 }
 
 

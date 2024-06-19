@@ -24,7 +24,6 @@ export async function loadManifest() {
  * 保存缓存
  */
 export async function saveManifest() {
-    console.log('开始同步到磁盘缓存')
     await writeDiskFileContent('.obsidian/publisher/manifest.json', JSON.stringify(publishManifest, null, 2))
-    console.log('写入完毕')
+    console.log('发布清单写入磁盘')
 }

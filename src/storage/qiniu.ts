@@ -2,16 +2,12 @@ import * as qiniuJS from "qiniu-js";
 import mime from "mime";
 
 
-let host = ''
-if (import.meta.env.DEV) {
-    host = 'http://localhost:8000'
-}
-
 /**
  * 获取资源上传token
  * @param filePath 文件保存路径
+ * @param host
  */
-export async function getUploadToken(filePath: string): Promise<string> {
+export async function getUploadToken(filePath: string, host: string): Promise<string> {
     const {code, data: token, msg} = await fetch(`${host}/api/qiniu/token?path=${encodeURIComponent(filePath)}`, {
         method: 'get',
     }).then(resp => resp.json())

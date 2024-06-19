@@ -3,6 +3,7 @@ import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 import sha256 from 'crypto-js/sha256';
 import hex from 'crypto-js/enc-hex'
 import * as qiniu from '@/storage/qiniu'
+import {fetchTokenURL, authorization} from '@/stores/app'
 
 /**
  * 格式化文件大小
@@ -27,6 +28,7 @@ export function readableFileSize(bytes: number) {
  * 上传文件
  * @param file 文件对象或文件内容
  * @param path 文件保存路径
+ * @param host
  */
 export async function uploadFile(path: string, file: File | string) {
     let fileObj: File
@@ -40,7 +42,7 @@ export async function uploadFile(path: string, file: File | string) {
     }
 
     try {
-        const token = await qiniu.getUploadToken(path)
+        const token = await qiniu.getUploadToken(path, fetchTokenURL.value)
         return await qiniu.uploadFile(fileObj, path, token)
     } catch (e: any) {
         throw e
