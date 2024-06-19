@@ -5,9 +5,16 @@ import {uploadFile} from '@/utils'
 import {message} from 'ant-design-vue'
 import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
 import {authorization, fetchTokenURL} from '@/stores/app'
+import type {Rule} from "ant-design-vue/es/form";
 
 
-const form: SiteOptions = reactive({
+interface SiteAuthorizationConfig {
+  fetchTokenURL: string
+  authorization: string
+}
+
+const formRef = ref(null)
+const form: SiteOptions & SiteAuthorizationConfig = reactive({
   siteName: '',
   indexFile: '',
   logo: '',
@@ -23,7 +30,35 @@ const form: SiteOptions = reactive({
   showBacklinks: true,
   showGraph: true,
   slidingWindowMode: false,
+
+  fetchTokenURL: '',
+  authorization: '',
 })
+const rules: Record<string, Rule[]> = {
+  fetchTokenURL: [
+    { required: true, message: '请填写网站地址', trigger: 'blur' },
+    { required: true, validator: validateURL, trigger: 'change' }
+  ]
+}
+async function validateURL(_rule: Rule, value: string) {
+  if (!value) {
+    return
+  }
+
+  try {
+    const {protocol, hostname} = new URL(value)
+    if (!['http:', 'https:'].includes(protocol)) {
+      return Promise.reject('不支持的协议')
+    } else if (!hostname) {
+      return Promise.reject('网站地址非法')
+    } else {
+      return Promise.resolve()
+    }
+  } catch (e: any) {
+    return Promise.reject('网站地址非法')
+  }
+}
+
 
 const open = ref(false)
 
@@ -39,18 +74,29 @@ async function openPanel() {
 const btnLoading = ref(false)
 
 async function save() {
-  btnLoading.value = true
+  (formRef.value! as any).validate().then(async () => {
+    fetchTokenURL.value = form.fetchTokenURL
+    authorization.value = form.authorization
 
-  try {
-    await uploadFile('options.json', JSON.stringify(form, null, 2))
-    await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(form, null, 2))
-    open.value = false
-    message.success('保存成功')
-  } catch (e: any) {
-    message.error(e.message)
-  } finally {
-    btnLoading.value = false
-  }
+    btnLoading.value = true
+
+    try {
+      const options: Record<string, any> = {...form}
+      delete options.fetchTokenURL
+      delete options.authorization
+
+      await uploadFile('options.json', JSON.stringify(options, null, 2))
+      await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(options, null, 2))
+      open.value = false
+      message.success('保存成功')
+    } catch (e: any) {
+      message.error(e.message)
+    } finally {
+      btnLoading.value = false
+    }
+  }).catch((e: any) => {
+
+  })
 }
 </script>
 
@@ -64,16 +110,16 @@ async function save() {
       size="large"
       :closable="false"
   >
-    <a-form :model="form" layout="vertical">
+    <a-form :model="form" :rules="rules" layout="vertical" ref="formRef">
       <a-row :gutter="16">
         <a-col :span="12">
-          <a-form-item label="Token获取地址" name="fetchTokenURL">
-            <a-input type="url" v-model:value="fetchTokenURL" placeholder="fetchTokenURL" autocomplete="off"/>
+          <a-form-item label="网站地址" name="fetchTokenURL">
+            <a-input type="url" v-model:value="form.fetchTokenURL" placeholder="fetchTokenURL" autocomplete="off"/>
           </a-form-item>
         </a-col>
         <a-col :span="12">
           <a-form-item label="Authorization" name="authorization">
-            <a-input v-model:value="authorization" placeholder="authorization" autocomplete="off"/>
+            <a-input v-model:value="form.authorization" placeholder="authorization" autocomplete="off"/>
           </a-form-item>
         </a-col>
       </a-row>
