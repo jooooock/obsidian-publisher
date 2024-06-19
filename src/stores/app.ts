@@ -87,7 +87,7 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
                 kind: 'file',
                 name: handle.name,
                 level: level,
-                checked: false,
+                checked: !!fileCache,
                 file: await handle.getFile(),
                 path: currentFilePath!,
                 uploadState: fileUploadState,
