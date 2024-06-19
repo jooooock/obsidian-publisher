@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {reactive, ref, watch} from "vue";
 import type {SiteOptions} from '@/types'
 import {uploadFile} from '@/utils'
 import {message} from 'ant-design-vue'
@@ -31,9 +31,17 @@ const form: SiteOptions & SiteAuthorizationConfig = reactive({
   showGraph: true,
   slidingWindowMode: false,
 
-  fetchTokenURL: '',
-  authorization: '',
+  fetchTokenURL: fetchTokenURL.value,
+  authorization: authorization.value,
 })
+
+watch(() => form.fetchTokenURL, (value: string) => {
+  fetchTokenURL.value = value
+})
+watch(() => form.authorization, (value: string) => {
+  authorization.value = value
+})
+
 const rules: Record<string, Rule[]> = {
   fetchTokenURL: [
     { required: true, message: '请填写网站地址', trigger: 'blur' },

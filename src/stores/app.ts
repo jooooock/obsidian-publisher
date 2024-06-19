@@ -115,6 +115,11 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
 export const isPublishing = ref(false)
 
 export async function upload() {
+    if (!fetchTokenURL.value) {
+        message.warn('请先配置网站地址')
+        return
+    }
+
     isPublishing.value = true
 
     for (const fileItem of checkedFiles.value) {
