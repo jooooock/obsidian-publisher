@@ -1,7 +1,22 @@
-import { createApp } from 'vue'
+import {createApp} from 'vue'
 import App from './App.vue'
 
-import { Checkbox, Tooltip, Progress, Popover, Button, Select, SelectOption } from 'ant-design-vue'
+import {
+    Button,
+    Checkbox,
+    Drawer,
+    Form,
+    Popover,
+    Progress,
+    Select,
+    SelectOption,
+    Tooltip,
+    Row,
+    Col,
+    Input,
+    Space,
+    Switch,
+} from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
 import './styles/bootstrap.scss'
 
@@ -14,5 +29,12 @@ app.use(Popover)
 app.use(Button)
 app.use(Select)
 app.use(SelectOption)
+app.use(Drawer)
+app.use(Form)
+app.use(Row)
+app.use(Col)
+app.use(Input)
+app.use(Space)
+app.use(Switch)
 
 app.mount('#app')

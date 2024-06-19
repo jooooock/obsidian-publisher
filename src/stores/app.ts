@@ -4,6 +4,7 @@ import {
     isFileSystemDirectoryHandle,
     isFileSystemFileHandle,
     readableFileSize,
+    readTextFileContent,
     resolveAllFiles,
     resolveFileCountInTreeNode,
     uploadFile,
@@ -11,6 +12,8 @@ import {
 import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
+import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
+import {parseMarkdown} from "@/parser";
 
 
 export let treeNodes = reactive<TreeItem[]>([])
@@ -22,7 +25,7 @@ export const sort = ref<SortMethod>('A-Z')
 
 let rootDirectoryHandle: FileSystemDirectoryHandle | null = null
 
-let manifestFileHandle: FileSystemFileHandle | null = null
+
 let optionsFileHandle: FileSystemFileHandle | null = null
 
 
@@ -40,6 +43,7 @@ export async function selectDirectory() {
     try {
         const obsidianDirectoryHandle = await rootDirectoryHandle.getDirectoryHandle('.obsidian')
         await loadCache(obsidianDirectoryHandle)
+        await loadManifest(obsidianDirectoryHandle)
     } catch (e: any) {
         if (e.name === 'NotFoundError') {
             message.error('选择的目录不是一个合法的仓库目录(仓库目录通常会包含一个 .obsidian 隐藏目录)')
@@ -125,32 +129,43 @@ export const isPublishing = ref(false)
 export async function upload() {
     isPublishing.value = true
 
-    for (const fileEntry of checkedFiles.value) {
-        if (fileEntry.uploadState === 'synced') {
+    for (const fileItem of checkedFiles.value) {
+        if (fileItem.uploadState === 'synced') {
             continue
         }
 
-        fileEntry.uploadState = 'uploading'
+        fileItem.uploadState = 'uploading'
 
         try {
-            const {code, msg} = await uploadFile(fileEntry)
-            if (code === 0) {
-                fileEntry.uploadState = 'synced'
-                await addNewFile(fileEntry)
+            const file = fileItem.file
+            const path = fileItem.path.join('/')
+            await uploadFile(file, path)
+
+            // md 文件需要解析
+            if (fileItem.path.join('/').endsWith('.md')) {
+                const doc = await readTextFileContent(file)
+                publishManifest[path] = parseMarkdown(doc)
             } else {
-                console.warn(msg)
-                fileEntry.uploadState = 'failed'
+                publishManifest[path] = null
             }
+
+            fileItem.uploadState = 'synced'
+            await addNewFile(fileItem)
         } catch (e) {
             // 上传出错
             console.error(e)
-            fileEntry.uploadState = 'failed'
+            fileItem.uploadState = 'failed'
         }
     }
 
     // 已上传文件数据写入磁盘缓存
     publishCache!.lastPublishAt = Date.now()
     await saveCache()
+
+    await saveManifest()
+
+    // 上传 manifest 文件
+    await uploadFile(JSON.stringify(publishManifest), 'manifest.json')
 
     isPublishing.value = false
     // message.success('上传完毕')

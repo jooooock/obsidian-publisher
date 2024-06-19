@@ -1,8 +1,8 @@
-import * as qiniuJS from 'qiniu-js'
 import mime from 'mime'
 import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 import sha256 from 'crypto-js/sha256';
 import hex from 'crypto-js/enc-hex'
+import * as qiniu from '@/storage/qiniu'
 
 /**
  * 格式化文件大小
@@ -22,66 +22,31 @@ export function readableFileSize(bytes: number) {
     }
 }
 
-let host = ''
-if (import.meta.env.DEV) {
-    host = 'http://localhost:8000'
-}
 
-// 上传文件
-export async function uploadFile(fileEntry: TreeItemFile) {
-    const file = fileEntry.file
-    const filePath = fileEntry.path.join('/')
-
-    if (filePath.endsWith('.md')) {
-        // md 文档通过服务器上传
-        const formData = new FormData()
-        formData.set('file', file)
-        formData.set('path', filePath)
-
-        return fetch(`${host}/api/storage/upload`, {
-            method: 'post',
-            body: formData,
-        }).then(resp => resp.json())
+/**
+ * 上传文件
+ * @param file 文件对象或文件内容
+ * @param path 文件保存路径
+ */
+export async function uploadFile(file: File | string, path: string) {
+    let fileObj: File
+    if (typeof file === 'string') {
+        const fileName = path.split('/').at(-1)!
+        fileObj = new File([file], fileName, {type: mime.getType(path)!})
+    } else if (file instanceof File) {
+        fileObj = file
     } else {
-        // 资源文件直接上传到七牛云
-        const {code, data: token, msg} = await fetch(`${host}/api/qiniu/token?path=${encodeURIComponent(filePath)}`, {
-            method: 'get',
-        }).then(resp => resp.json())
-        if (code !== 0) {
-            // token 获取失败
-            return {code: code, msg: msg}
-        }
+        throw new Error('file参数格式不正确')
+    }
 
-        const uploadResult = new Promise((resolve, reject) => {
-            const observable = qiniuJS.upload(file, filePath, token, {
-                mimeType: mime.getType(filePath)!,
-            })
-            observable.subscribe({
-                error(err) {
-                    reject(err);
-                },
-                complete(res) {
-                    resolve(res)
-                },
-            });
-        })
-
-        try {
-            const res = await uploadResult
-
-            // 由于用 callbackUrl/callbackBody 的方式后端收不到回调，所以改为前端手动通知服务端
-            return await fetch(`${host}/api/qiniu/upload/callback`, {
-                method: 'post',
-                body: JSON.stringify(res),
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            }).then(resp => resp.json())
-        } catch (e: any) {
-            return {code: 1, msg: e.message}
-        }
+    try {
+        const token = await qiniu.getUploadToken(path)
+        return await qiniu.uploadFile(fileObj, path, token)
+    } catch (e: any) {
+        throw e
     }
 }
+
 
 /**
  * 递归获取指定树节点下的所有文件
@@ -177,7 +142,11 @@ export async function calcFileHash(file: File) {
     }
 }
 
-function readTextFileContent(file: File): Promise<string> {
+/**
+ * 读取文件的文本内容
+ * @param file
+ */
+export function readTextFileContent(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.addEventListener('load', event => {

@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-publish-manager",
+  "name": "obsidian-publisher",
   "version": "0.0.1",
   "type": "module",
   "author": "jooooock",
@@ -15,7 +15,16 @@
     "bootstrap": "^5.3.3",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.11",
+    "js-yaml": "^4.1.0",
     "lucide-vue-next": "^0.394.0",
+    "mdast-util-from-markdown": "^2.0.1",
+    "mdast-util-frontmatter": "^2.0.1",
+    "mdast-util-gfm": "^3.0.0",
+    "micromark-extension-frontmatter": "^2.0.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "micromark-util-character": "^2.1.0",
+    "micromark-util-symbol": "^2.0.0",
+    "micromark-util-types": "^2.0.0",
     "mime": "^4.0.3",
     "qiniu-js": "3.x",
     "vue": "^3.4.27"
@@ -23,6 +32,7 @@
   "devDependencies": {
     "@types/bootstrap": "^5.2.10",
     "@types/crypto-js": "^4.2.2",
+    "@types/js-yaml": "^4.0.9",
     "@vitejs/plugin-vue": "^5.0.5",
     "@vue/tsconfig": "^0.5.1",
     "npm-run-all": "^4.1.5",

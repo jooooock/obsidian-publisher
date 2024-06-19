@@ -1,0 +1,1 @@
+export {parseMarkdown} from './parser'

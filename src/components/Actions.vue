@@ -3,6 +3,7 @@ import {ref, watch} from "vue";
 import {ArrowUpNarrowWide, ChevronsDownUp, ChevronsUpDown, Loader} from "lucide-vue-next"
 import * as dayjs from 'dayjs'
 import SortOptions from "@/components/SortOptions.vue"
+import SiteOptionsPanel from "@/components/SiteOptionsPanel.vue"
 import {
   checkedFilesCount,
   hideEmptyDir,
@@ -136,10 +137,15 @@ function formatLastPublishTime(timestamp: number) {
       </a-popover>
     </a-tooltip>
 
-    <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{ totalFileSize }})</span>
-    <span class="a-text-info">上次上传时间: {{formatLastPublishTime(publishCache.lastPublishAt)}}</span>
+    <div class="extra-info">
+      <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{
+          totalFileSize
+        }})</span>
+      <span class="a-text-info">上次上传时间: {{ formatLastPublishTime(publishCache.lastPublishAt) }}</span>
+    </div>
     <div class="flex-grow-1"></div>
 
+    <SiteOptionsPanel/>
     <button class="btn btn-primary d-flex align-items-center" @click="upload"
             :disabled="checkedFilesCount <= 0 || isPublishing">
       <Loader v-if="isPublishing" class="spin me-1" :size="18"/>
@@ -149,6 +155,8 @@ function formatLastPublishTime(timestamp: number) {
 </template>
 
 <style scoped>
+@import "@/styles/utils.css";
+
 .hover-gray:hover {
   background: lightgray;
 }
@@ -156,5 +164,11 @@ function formatLastPublishTime(timestamp: number) {
 .a-text-info {
   font-size: 14px;
   color: #9ea2a6;
+}
+
+@media (max-width: 992px) {
+  .extra-info {
+    display: none;
+  }
 }
 </style>
