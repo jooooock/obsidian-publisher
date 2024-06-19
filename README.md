@@ -1,1 +1,1 @@
-# obsidian-publish-manager
+# obsidian-publisher
