@@ -29,5 +29,5 @@ jobs:
       - name: 部署到 Deno Deploy
         uses: denoland/deployctl@v1
         with:
-          project: obsidian-publisher
+          project: publisher
           entrypoint: server.ts
