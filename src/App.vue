@@ -17,7 +17,7 @@
 
   <figure class="figure d-flex flex-column align-items-center" v-if="!vaultName">
     <img src="@/assets/images/not-select-vault.png" class="figure-img img-fluid" alt="...">
-    <figcaption class="figure-caption text-center">还未选择仓库</figcaption>
+    <figcaption class="figure-caption text-center">请先选择仓库</figcaption>
   </figure>
 </template>
 
@@ -28,6 +28,10 @@ import Actions from "@/components/Actions.vue"
 import Tree from "@/components/Tree.vue"
 import type {TreeItem, TreeItemDirectory} from "@/types"
 import {treeNodes, isPublishing, hideEmptyDir, showFileSize, sort, vaultName} from "@/stores/app"
+import {send} from "@/storage/r2"
+
+
+send()
 
 function onToggleEntry(directory: TreeItemDirectory) {
   directory.collapsed = !directory.collapsed
@@ -62,4 +66,8 @@ function onEntryCheckChange(item: TreeItem, checked: boolean) {
   font-family: Monaco, sans-serif;
 }
 
+.figure-caption {
+  font-family: Monaco, sans-serif;
+  font-size: 18px;
+}
 </style>
