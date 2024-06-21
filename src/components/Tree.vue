@@ -45,19 +45,19 @@
 
         <!-- 同步状态-->
         <a-tooltip :mouseEnterDelay=".5">
-          <template #title>上传成功</template>
+          <template #title>已发布</template>
           <CircleCheckBig v-if="itemHasSynced(item)" :size="18" class="icon-status-success ms-2"/>
         </a-tooltip>
         <a-tooltip :mouseEnterDelay=".5">
-          <template #title>上传失败</template>
+          <template #title>发布失败</template>
           <TriangleAlert v-if="itemHasFailed(item)" :size="18" class="icon-status-failed ms-2"/>
         </a-tooltip>
         <a-tooltip :mouseEnterDelay=".5">
-          <template #title>上传中</template>
+          <template #title>发布中</template>
           <Loader v-if="itemIsUploading(item)" :size="18" color="dimgray" class="spin ms-2"/>
         </a-tooltip>
         <a-tooltip :mouseEnterDelay=".5">
-          <template #title>文件内容已变化</template>
+          <template #title>文件内容已修改</template>
           <Repeat2 v-if="itemHasDirty(item)" :size="18" class="icon-status-dirty ms-2"/>
         </a-tooltip>
 
