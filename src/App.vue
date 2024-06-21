@@ -28,10 +28,10 @@ import Actions from "@/components/Actions.vue"
 import Tree from "@/components/Tree.vue"
 import type {TreeItem, TreeItemDirectory} from "@/types"
 import {treeNodes, isPublishing, hideEmptyDir, showFileSize, sort, vaultName} from "@/stores/app"
-import {send} from "@/storage/r2"
+import {listObjects} from "@/storage/r2"
 
 
-send()
+listObjects()
 
 function onToggleEntry(directory: TreeItemDirectory) {
   directory.collapsed = !directory.collapsed
