@@ -9,10 +9,9 @@ import {
     uploadFile,
 } from "@/utils"
 import type {SortMethod, TreeItem, UploadState} from "@/types";
-import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
-import {loadSiteAuthorization, storageConfig, isStorageConfigCorrect} from '@/stores/storage-config'
+import {loadSiteAuthorization, isStorageConfigCorrect} from '@/stores/storage-config'
 import {parseMarkdown} from "@/parser"
 import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle} from '@/stores/fs'
 
@@ -37,7 +36,9 @@ export async function selectDirectory() {
         await loadSiteAuthorization()
     } catch (e: any) {
         console.warn(e)
-        message.warn(e.message)
+        notification.warning({
+            message: e.message,
+        });
         return
     }
 
@@ -115,7 +116,9 @@ export const isPublishing = ref(false)
 
 export async function upload() {
     if (!isStorageConfigCorrect) {
-        message.warn('请先进行存储配置')
+        notification.warning({
+            message: '请先进行存储配置',
+        });
         return
     }
 
@@ -176,9 +179,13 @@ export async function upload() {
     try {
         // 上传 manifest 文件
         await uploadFile('manifest.json', JSON.stringify(publishManifest))
-        message.success('发布完成')
+        notification.success({
+            message: '发布完成',
+        });
     } catch (e: any) {
-        message.error(`manifest.json 文件上传失败: ${e.message}`)
+        notification.error({
+            message: `manifest.json 文件上传失败: ${e.message}`,
+        });
     }
 
     isPublishing.value = false
