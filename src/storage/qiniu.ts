@@ -30,8 +30,12 @@ export async function getUploadToken(filePath: string, host: string, authorizati
  */
 export function uploadFile(file: File, path: string, token: string) {
     return new Promise((resolve, reject) => {
+        let mimeType = mime.getType(path)!
+        if (mimeType.startsWith('text/')) {
+            mimeType += '; charset=utf-8'
+        }
         const observable = qiniuJS.upload(file, path, token, {
-            mimeType: mime.getType(path)!,
+            mimeType: mimeType,
         })
         observable.subscribe({
             error(err) {

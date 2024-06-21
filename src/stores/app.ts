@@ -1,4 +1,5 @@
 import {computed, reactive, ref} from "vue";
+import { notification } from 'ant-design-vue'
 import {
     calcFileHash,
     readableFileSize,
@@ -11,7 +12,7 @@ import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {message} from 'ant-design-vue'
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
-import {loadSiteAuthorization, siteAuthorization} from '@/stores/publish-authorization'
+import {loadSiteAuthorization, storageConfig, isStorageConfigCorrect} from '@/stores/storage-config'
 import {parseMarkdown} from "@/parser"
 import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle} from '@/stores/fs'
 
@@ -113,12 +114,13 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
 export const isPublishing = ref(false)
 
 export async function upload() {
-    if (!siteAuthorization.fetchTokenURL || !siteAuthorization.authorization) {
-        message.warn('请先配置网站认证信息')
+    if (!isStorageConfigCorrect) {
+        message.warn('请先进行存储配置')
         return
     }
 
     isPublishing.value = true
+    let canContinue = true
 
     for (const fileItem of checkedFiles.value) {
         if (fileItem.uploadState === 'synced') {
@@ -142,11 +144,27 @@ export async function upload() {
 
             fileItem.uploadState = 'synced'
             await addNewFile(fileItem)
-        } catch (e) {
+        } catch (e: any) {
             // 上传出错
             console.error(e)
             fileItem.uploadState = 'failed'
+
+            notification.error({
+                message: '文件上传失败',
+                description: e.message,
+            });
+
+            if (e.message.includes('配置') || e.message.includes('Failed to fetch')) {
+                canContinue = false
+                break
+            }
         }
+    }
+
+    if (!canContinue) {
+        // 如果出现了配置类错误，则结束上传过程
+        isPublishing.value = false
+        return
     }
 
     // 已上传文件数据写入磁盘缓存

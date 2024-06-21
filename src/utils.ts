@@ -3,7 +3,8 @@ import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 import sha256 from 'crypto-js/sha256';
 import hex from 'crypto-js/enc-hex'
 import * as qiniu from '@/storage/qiniu'
-import {siteAuthorization} from '@/stores/publish-authorization'
+import * as r2 from '@/storage/cloudflare-r2'
+import {storageConfig} from '@/stores/storage-config'
 
 
 /**
@@ -42,8 +43,14 @@ export async function uploadFile(path: string, file: File | string) {
     }
 
     try {
-        const token = await qiniu.getUploadToken(path, siteAuthorization.fetchTokenURL, siteAuthorization.authorization)
-        return await qiniu.uploadFile(fileObj, path, token)
+        if (storageConfig.provider === 'qiniu') {
+            const token = await qiniu.getUploadToken(path, storageConfig.fetchTokenURL, storageConfig.authorization)
+            return await qiniu.uploadFile(fileObj, path, token)
+        } else if (storageConfig.provider === 'R2') {
+            return await r2.uploadFile(fileObj, path, storageConfig)
+        } else {
+            throw new Error('存储配置不正确')
+        }
     } catch (e: any) {
         throw e
     }
@@ -122,13 +129,32 @@ export function readTextFileContent(file: File): Promise<string> {
     })
 }
 
+function padLeft(data: string, len: number) {
+    if (data.length < len) {
+        return ('0'.repeat(len) + data).slice(-1 * len)
+    }
+    return data
+}
+
 export function genAuthorization(): string {
-    const secret = crypto.getRandomValues(new Uint8Array(20)).reduce((result, num) => {
-        return result + String.fromCharCode(num)
+    const secret = crypto.getRandomValues(new Uint8Array(32)).reduce((result, num) => {
+        return result + padLeft(num.toString(16), 2)
     }, '')
     const payload = {
         secret: secret,
         expired: Date.now() + 1000 * 60 * 60 * 24 * 7, // 默认有效期 7 天
     }
     return btoa(JSON.stringify(payload))
+}
+
+/**
+ * 写入剪切板
+ * @param text
+ */
+export async function writeClipBoard(text: string) {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch (e: any) {
+        console.error(e.message);
+    }
 }

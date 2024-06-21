@@ -1,23 +1,23 @@
 <script setup lang="ts">
 import {ref, watch} from "vue";
 import {ArrowUpNarrowWide, ChevronsDownUp, ChevronsUpDown, Loader} from "lucide-vue-next"
-import * as dayjs from 'dayjs'
 import SortOptions from "@/components/SortOptions.vue"
-import SiteOptionsPanel from "@/components/SiteOptionsPanel.vue"
+import SiteConfigDrawer from "@/components/SiteConfigDrawer.vue"
+import StorageConfigDrawer from "@/components/StorageConfigDrawer.vue"
 import {
   checkedFilesCount,
   hideEmptyDir,
   isPublishing,
+  selectDirectory,
   showFileSize,
   sort,
-  totalFilesCount,
-  totalFileSize,
   treeNodes,
-  upload
+  upload,
+  vaultName
 } from "@/stores/app";
 import type {SortMethod, TreeItem} from "@/types";
 import {resolveAllFiles} from "@/utils";
-import {publishCache} from '@/stores/publish-cache'
+import {storageConfig} from "@/stores/storage-config"
 
 
 const sortVisible = ref(false)
@@ -93,64 +93,69 @@ function updateAllDirectoryCheckState() {
 
   updateDirectoryCheckState(treeNodes)
 }
-
-function formatLastPublishTime(timestamp: number) {
-  return dayjs.default(timestamp).format('YYYY-MM-DD HH:mm:ss')
-}
 </script>
 
 <template>
-  <div class="actions d-flex align-items-center pb-2" v-if="treeNodes.length">
-    <a-checkbox
-        v-model:checked="checkAll"
-        :indeterminate="checkAllIsIndeterminate"
-        :disabled="isPublishing"
-        @change="handleCheckAllChange"
-        style="margin-inline: 10px"
-    >
-      全选
-    </a-checkbox>
-    <a-checkbox v-model:checked="showFileSize" style="margin-right: 10px">显示文件大小</a-checkbox>
-    <a-checkbox v-model:checked="hideEmptyDir" style="margin-right: 10px">隐藏空目录</a-checkbox>
+  <div class="actions d-flex pb-2" v-if="treeNodes.length">
+    <div class="d-flex align-items-center">
+      <a-checkbox
+          v-model:checked="checkAll"
+          :indeterminate="checkAllIsIndeterminate"
+          :disabled="isPublishing"
+          @change="handleCheckAllChange"
+          style="margin-inline: 10px"
+      >
+        全选
+      </a-checkbox>
+      <a-checkbox v-model:checked="showFileSize" style="margin-right: 10px">显示文件大小</a-checkbox>
+      <a-checkbox v-model:checked="hideEmptyDir" style="margin-right: 10px">隐藏空目录</a-checkbox>
 
-    <a-tooltip :mouseEnterDelay=".3">
-      <template #title>全部折叠</template>
-      <button type="button" @click="setAllCollapse(true)" class="btn btn-sm hover-gray">
-        <ChevronsDownUp/>
-      </button>
-    </a-tooltip>
-    <a-tooltip :mouseEnterDelay=".3">
-      <template #title>全部展开</template>
-      <button type="button" @click="setAllCollapse(false)" class="btn btn-sm hover-gray">
-        <ChevronsUpDown/>
-      </button>
-    </a-tooltip>
-    <a-tooltip :mouse-enter-delay=".3">
-      <template #title>排序</template>
-      <a-popover v-model:open="sortVisible" trigger="click" placement="rightTop">
-        <template #content>
-          <SortOptions :sort="sort" @change="onSortChange"/>
-        </template>
-        <button type="button" class="btn btn-sm hover-gray">
-          <ArrowUpNarrowWide/>
+      <a-tooltip :mouseEnterDelay=".3">
+        <template #title>全部折叠</template>
+        <button type="button" @click="setAllCollapse(true)" class="btn btn-sm hover-gray">
+          <ChevronsDownUp/>
         </button>
-      </a-popover>
-    </a-tooltip>
+      </a-tooltip>
+      <a-tooltip :mouseEnterDelay=".3">
+        <template #title>全部展开</template>
+        <button type="button" @click="setAllCollapse(false)" class="btn btn-sm hover-gray">
+          <ChevronsUpDown/>
+        </button>
+      </a-tooltip>
+      <a-tooltip :mouse-enter-delay=".3">
+        <template #title>排序</template>
+        <a-popover v-model:open="sortVisible" trigger="click" placement="rightTop">
+          <template #content>
+            <SortOptions :sort="sort" @change="onSortChange"/>
+          </template>
+          <button type="button" class="btn btn-sm hover-gray">
+            <ArrowUpNarrowWide/>
+          </button>
+        </a-popover>
+      </a-tooltip>
 
-    <div class="extra-info">
-      <span class="mx-2 a-text-info">(已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{
-          totalFileSize
-        }})</span>
-      <span class="a-text-info">上次上传时间: {{ formatLastPublishTime(publishCache.lastPublishAt) }}</span>
+      <!-- 存储配置-->
+      <StorageConfigDrawer />
+
+      <!-- 网站配置-->
+      <SiteConfigDrawer />
     </div>
+
+
     <div class="flex-grow-1"></div>
 
-    <SiteOptionsPanel/>
-    <button class="btn btn-primary d-flex align-items-center" @click="upload"
-            :disabled="checkedFilesCount <= 0 || isPublishing">
-      <Loader v-if="isPublishing" class="spin me-1" :size="18"/>
-      {{ isPublishing ? '上传中' : '开始上传' }}
-    </button>
+    <div class="d-flex align-items-center">
+      <button class="btn btn-light mx-2" @click="selectDirectory" :disabled="isPublishing">
+        <span v-if="vaultName">当前选择仓库: {{ vaultName }}</span>
+        <span v-else>选择仓库目录</span>
+      </button>
+
+      <button class="btn btn-primary d-flex align-items-center" @click="upload"
+              :disabled="checkedFilesCount <= 0 || isPublishing">
+        <Loader v-if="isPublishing" class="spin me-1" :size="18"/>
+        {{ isPublishing ? `发布中(${storageConfig.provider})` : `开始发布(${storageConfig.provider})` }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -160,15 +165,10 @@ function formatLastPublishTime(timestamp: number) {
 .hover-gray:hover {
   background: lightgray;
 }
-
-.a-text-info {
-  font-size: 14px;
-  color: #9ea2a6;
-}
-
 @media (max-width: 992px) {
-  .extra-info {
-    display: none;
+  .actions {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

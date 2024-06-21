@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import {reactive, ref, watch} from "vue";
+import {reactive, ref} from "vue";
 import {message} from 'ant-design-vue'
-import {Atom} from 'lucide-vue-next'
-import type {Rule} from "ant-design-vue/es/form";
+import {Cog} from 'lucide-vue-next'
 import type {SiteOptions} from '@/types'
-import {genAuthorization, uploadFile} from '@/utils'
+import {uploadFile} from '@/utils'
 import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
-import {siteAuthorization, type SiteAuthorization} from '@/stores/publish-authorization'
 
 
-const formRef = ref(null)
-const form: SiteOptions & SiteAuthorization = reactive({
+const form: SiteOptions = reactive({
   siteName: '',
   indexFile: '',
   logo: '',
@@ -26,55 +23,12 @@ const form: SiteOptions & SiteAuthorization = reactive({
   showBacklinks: true,
   showGraph: true,
   slidingWindowMode: false,
-
-  fetchTokenURL: siteAuthorization.fetchTokenURL,
-  authorization: siteAuthorization.authorization,
 })
 
-watch(() => form.fetchTokenURL, (value: string) => {
-  siteAuthorization.fetchTokenURL = value
-})
-watch(() => form.authorization, (value: string) => {
-  siteAuthorization.authorization = value
-})
+const drawerVisibility = ref(false)
 
-const rules: Record<string, Rule[]> = {
-  fetchTokenURL: [
-    { required: true, message: '请填写网站地址', trigger: 'blur' },
-    { required: true, validator: validateURL, trigger: 'change' }
-  ],
-  authorization: [
-    { required: true, message: '请填写Authorization', trigger: 'blur' },
-  ]
-}
-async function validateURL(_rule: Rule, value: string) {
-  if (!value) {
-    return
-  }
-
-  try {
-    const {protocol, hostname} = new URL(value)
-    if (!['http:', 'https:'].includes(protocol)) {
-      return Promise.reject('不支持的协议')
-    } else if (!hostname) {
-      return Promise.reject('网站地址非法')
-    } else {
-      return Promise.resolve()
-    }
-  } catch (e: any) {
-    return Promise.reject('网站地址非法')
-  }
-}
-
-function autoGen() {
-  form.authorization = genAuthorization()
-}
-
-
-const open = ref(false)
-
-async function openPanel() {
-  open.value = true
+async function openDrawer() {
+  drawerVisibility.value = true
 
   const options = await readDiskFileContent('.obsidian/publisher/options.json')
   if (options) {
@@ -85,64 +39,41 @@ async function openPanel() {
 const btnLoading = ref(false)
 
 async function save() {
-  (formRef.value! as any).validate().then(async () => {
-    btnLoading.value = true
+  btnLoading.value = true
 
-    try {
-      const options: Record<string, any> = {...form}
-      delete options.fetchTokenURL
-      delete options.authorization
+  try {
+    // 上传网站配置
+    await uploadFile('options.json', JSON.stringify(form, null, 2))
 
-      await uploadFile('options.json', JSON.stringify(options, null, 2))
-      await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(options, null, 2))
-      await writeDiskFileContent('.obsidian/publisher/authorization.json', JSON.stringify(siteAuthorization, null, 2))
-      open.value = false
-      message.success('保存成功')
-    } catch (e: any) {
-      message.error(e.message)
-    } finally {
-      btnLoading.value = false
-    }
-  }).catch((e: any) => {
+    // 同步到磁盘
+    await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(form, null, 2))
 
-  })
+    drawerVisibility.value = false
+    message.success('保存成功')
+  } catch (e: any) {
+    message.error(e.message)
+  } finally {
+    btnLoading.value = false
+  }
 }
 </script>
 
 <template>
-  <button class="btn btn-outline-secondary mx-2" @click="openPanel">网站配置</button>
+  <a-tooltip :mouse-enter-delay=".3">
+    <template #title>网站配置</template>
+    <button type="button" @click="openDrawer" class="btn btn-sm hover-gray">
+      <Cog/>
+    </button>
+  </a-tooltip>
 
   <a-drawer
-      v-model:open="open"
+      v-model:open="drawerVisibility"
       title="网站配置"
       placement="right"
       size="large"
       :closable="false"
   >
-    <a-form :model="form" :rules="rules" layout="vertical" ref="formRef">
-      <a-row :gutter="16">
-        <a-col :span="12">
-          <a-form-item label="网站地址" name="fetchTokenURL">
-            <a-input type="url" v-model:value="form.fetchTokenURL" placeholder="fetchTokenURL" autocomplete="off"/>
-          </a-form-item>
-        </a-col>
-        <a-col :span="12">
-          <a-form-item label="Authorization" name="authorization">
-            <a-input-group compact>
-              <a-input v-model:value="form.authorization" readonly="readonly" placeholder="authorization" autocomplete="off" style="width: calc(100% - 32px)"/>
-              <a-tooltip title="重新生成">
-                <a-button @click="autoGen">
-                  <template #icon><Atom /></template>
-                </a-button>
-              </a-tooltip>
-            </a-input-group>
-          </a-form-item>
-        </a-col>
-      </a-row>
-
-      <p class="text-danger">以上配置不会上传到服务器，仅保存在本地</p>
-      <hr>
-
+    <a-form :model="form" layout="vertical">
       <a-row :gutter="16">
         <a-col :span="12">
           <a-form-item label="网站名称" name="siteName">
@@ -248,5 +179,7 @@ async function save() {
 </template>
 
 <style scoped>
-
+.hover-gray:hover {
+  background: lightgray;
+}
 </style>

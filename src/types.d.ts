@@ -41,6 +41,7 @@ export interface PublishCache {
     lastPublishAt: number
 }
 
+// 发布网站配置
 export interface SiteOptions {
     // 网站名称
     siteName: string
@@ -88,4 +89,18 @@ export interface SiteOptions {
 
     // 滑动窗口模式
     slidingWindowMode: boolean
+}
+
+
+
+// 云端存储配置
+export interface StorageOptions {
+    provider: 'qiniu' | 'R2' | null
+    fetchTokenURL: string
+    authorization: string
+
+    accountID: string
+    accessKeyID: string
+    secretAccessKey: string
+    bucketName: string
 }

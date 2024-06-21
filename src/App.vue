@@ -1,8 +1,5 @@
 <template>
-  <Header />
-  <Progress />
   <Actions />
-
   <div class="tree-list-wrapper" v-if="treeNodes.length">
     <Tree
         :tree-data="treeNodes"
@@ -14,24 +11,23 @@
         @check:change="onEntryCheckChange"
     />
   </div>
+  <Status />
+  <Progress />
 
   <figure class="figure d-flex flex-column align-items-center" v-if="!vaultName">
     <img src="@/assets/images/not-select-vault.png" class="figure-img img-fluid" alt="...">
-    <figcaption class="figure-caption text-center">请先选择仓库</figcaption>
+    <button class="btn btn-primary btn-sm" @click="selectDirectory">请选择仓库目录</button>
   </figure>
 </template>
 
 <script setup lang="ts">
-import Header from "@/components/Header.vue"
 import Progress from "@/components/Progress.vue"
 import Actions from "@/components/Actions.vue"
 import Tree from "@/components/Tree.vue"
+import Status from "@/components/Status.vue"
 import type {TreeItem, TreeItemDirectory} from "@/types"
-import {treeNodes, isPublishing, hideEmptyDir, showFileSize, sort, vaultName} from "@/stores/app"
-import {listObjects} from "@/storage/r2"
+import {treeNodes, isPublishing, hideEmptyDir, showFileSize, sort, vaultName, selectDirectory} from "@/stores/app"
 
-
-listObjects()
 
 function onToggleEntry(directory: TreeItemDirectory) {
   directory.collapsed = !directory.collapsed
@@ -58,16 +54,12 @@ function onEntryCheckChange(item: TreeItem, checked: boolean) {
 @import "@/styles/utils.css";
 
 .tree-list-wrapper {
-  height: calc(100vh - (50px + 0.5rem) - 60px - 46px);
+  /* 100vh - Actions高度 - Status高度 - Progress高度 */
+  height: calc(100vh - 46px - 40px - 60px);
   border: 1px solid lightgray;
   border-radius: 5px;
   overflow-x: hidden;
   overflow-y: scroll;
   font-family: Monaco, sans-serif;
-}
-
-.figure-caption {
-  font-family: Monaco, sans-serif;
-  font-size: 18px;
 }
 </style>
