@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {reactive, ref} from "vue";
-import {message} from 'ant-design-vue'
+import {message, notification} from 'ant-design-vue'
 import {Cog} from 'lucide-vue-next'
 import type {SiteOptions} from '@/types'
-import {uploadFile} from '@/utils'
 import {readDiskFileContent, writeDiskFileContent} from "@/stores/fs";
+import {cloudStorage} from "@/stores/storage-config"
 
 
 const form: SiteOptions = reactive({
@@ -39,11 +39,18 @@ async function openDrawer() {
 const btnLoading = ref(false)
 
 async function save() {
+  if (!cloudStorage) {
+    notification.warning({
+      message: '请先进行存储配置',
+    });
+    return
+  }
+
   btnLoading.value = true
 
   try {
     // 上传网站配置
-    await uploadFile('options.json', JSON.stringify(form, null, 2))
+    await cloudStorage.putObject(JSON.stringify(form, null, 2), 'options.json')
 
     // 同步到磁盘
     await writeDiskFileContent('.obsidian/publisher/options.json', JSON.stringify(form, null, 2))

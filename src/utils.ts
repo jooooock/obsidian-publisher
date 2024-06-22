@@ -2,9 +2,6 @@ import mime from 'mime'
 import type {TreeItem, TreeItemDirectory, TreeItemFile} from "@/types";
 import sha256 from 'crypto-js/sha256';
 import hex from 'crypto-js/enc-hex'
-import * as qiniu from '@/storage/qiniu'
-import * as r2 from '@/storage/cloudflare-r2'
-import {storageConfig} from '@/stores/storage-config'
 
 
 /**
@@ -22,37 +19,6 @@ export function readableFileSize(bytes: number) {
         return `${(bytes / (1024 ** 3)).toFixed(2)} GB`
     } else {
         return 'large file'
-    }
-}
-
-
-/**
- * 上传文件
- * @param file 文件对象或文件内容
- * @param path 文件保存路径
- */
-export async function uploadFile(path: string, file: File | string) {
-    let fileObj: File
-    if (typeof file === 'string') {
-        const fileName = path.split('/').at(-1)!
-        fileObj = new File([file], fileName, {type: mime.getType(path)!})
-    } else if (file instanceof File) {
-        fileObj = file
-    } else {
-        throw new Error('file参数格式不正确')
-    }
-
-    try {
-        if (storageConfig.provider === 'qiniu') {
-            const token = await qiniu.getUploadToken(path, storageConfig.fetchTokenURL, storageConfig.authorization)
-            return await qiniu.uploadFile(fileObj, path, token)
-        } else if (storageConfig.provider === 'R2') {
-            return await r2.uploadFile(fileObj, path, storageConfig)
-        } else {
-            throw new Error('存储配置不正确')
-        }
-    } catch (e: any) {
-        throw e
     }
 }
 

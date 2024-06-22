@@ -93,12 +93,12 @@ export interface SiteOptions {
 
 
 
-// 云端存储配置
-export interface StorageOptions {
+// 云存储配置
+export interface S3StorageOptions {
     provider: 'qiniu' | 'R2' | null
-    fetchTokenURL: string
-    authorization: string
 
+    region: string
+    endpoint: string
     accountID: string
     accessKeyID: string
     secretAccessKey: string

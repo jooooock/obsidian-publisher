@@ -6,14 +6,13 @@ import {
     readTextFileContent,
     resolveAllFiles,
     resolveFileCountInTreeNode,
-    uploadFile,
 } from "@/utils"
 import type {SortMethod, TreeItem, UploadState} from "@/types";
 import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
-import {loadSiteAuthorization, isStorageConfigCorrect} from '@/stores/storage-config'
+import {initCloudStorage, cloudStorage} from '@/stores/storage-config'
 import {parseMarkdown} from "@/parser"
-import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle} from '@/stores/fs'
+import {selectVault, isFileSystemDirectoryHandle, isFileSystemFileHandle, readDiskFileContent} from '@/stores/fs'
 
 
 export let treeNodes = reactive<TreeItem[]>([])
@@ -22,6 +21,8 @@ export let vaultName = ref('')
 export const hideEmptyDir = ref(false)
 export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
+
+
 
 
 // 选择仓库目录
@@ -33,7 +34,11 @@ export async function selectDirectory() {
 
         await loadCache()
         await loadManifest()
-        await loadSiteAuthorization()
+
+        const s3Options = await readDiskFileContent('.obsidian/publisher/s3.json')
+        if (s3Options) {
+            initCloudStorage(JSON.parse(s3Options))
+        }
     } catch (e: any) {
         console.warn(e)
         notification.warning({
@@ -115,7 +120,7 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
 export const isPublishing = ref(false)
 
 export async function upload() {
-    if (!isStorageConfigCorrect) {
+    if (!cloudStorage) {
         notification.warning({
             message: '请先进行存储配置',
         });
@@ -135,7 +140,7 @@ export async function upload() {
         try {
             const file = fileItem.file
             const path = fileItem.path.join('/')
-            await uploadFile(path, file)
+            await cloudStorage.putObject(file, path)
 
             // 解析文件元数据
             if (path.endsWith('.md')) {
@@ -178,7 +183,7 @@ export async function upload() {
 
     try {
         // 上传 manifest 文件
-        await uploadFile('manifest.json', JSON.stringify(publishManifest))
+        await cloudStorage.putObject(JSON.stringify(publishManifest), 'manifest.json')
         notification.success({
             message: '发布完成',
         });
