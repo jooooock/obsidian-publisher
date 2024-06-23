@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {checkedFilesCount, totalFilesCount, totalFileSize, treeNodes} from "@/stores/app";
+import {checkedFilesCount, totalFilesCount, totalFileSize, treeNodes, newUploadFilesCount, deleteUploadFilesCount} from "@/stores/app";
 import {publishCache} from "@/stores/publish-cache";
 import * as dayjs from "dayjs";
 
@@ -10,9 +10,10 @@ function formatLastPublishTime(timestamp: number) {
 
 <template>
   <div class="py-2" v-if="treeNodes.length">
-      <span class="mx-2 a-text-info">已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{
-          totalFileSize
-        }}</span>
+    <span class="mx-2 a-text-info">已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{
+        totalFileSize
+      }}</span>
+    <span class="a-text-info">(新增: {{newUploadFilesCount}}, 删除: {{deleteUploadFilesCount}})</span>
     <span class="a-text-info ms-3">上次发布时间: {{ formatLastPublishTime(publishCache.lastPublishAt) }}</span>
   </div>
 </template>

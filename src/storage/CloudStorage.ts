@@ -15,8 +15,6 @@ export default class CloudStorage {
 
 
     constructor(options: S3StorageOptions) {
-        this.options = options
-
         let region = ''
         let endpoint = ''
         if (options.provider === 'qiniu') {
@@ -31,6 +29,7 @@ export default class CloudStorage {
             throw new Error('options配置不正确')
         }
 
+        this.options = options
         this.s3 = new S3Client({
             region: region,
             endpoint: endpoint,

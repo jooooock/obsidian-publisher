@@ -29,15 +29,26 @@ export async function loadCache() {
  * @param fileEntry
  */
 export async function addNewFile(fileEntry: TreeItemFile) {
-    const targetFile = publishCache!.files.find(file => file.path.join('/') === fileEntry.path.join('/'))
+    const targetFile = publishCache.files.find(file => file.path.join('/') === fileEntry.path.join('/'))
     if (targetFile) {
         // 更新hash
         targetFile.hash = await calcFileHash(fileEntry.file)
     } else {
-        publishCache?.files.push({
+        publishCache.files.push({
             path: fileEntry.path,
             hash: await calcFileHash(fileEntry.file)
         })
+    }
+}
+
+/**
+ * 删除文件
+ * @param fileEntry
+ */
+export function deleteFile(fileEntry: TreeItemFile) {
+    const targetFileIndex = publishCache.files.findIndex(file => file.path.join('/') === fileEntry.path.join('/'))
+    if (targetFileIndex !== -1) {
+        publishCache.files.splice(targetFileIndex, 1)
     }
 }
 

@@ -1,6 +1,6 @@
-import {reactive, ref} from "vue";
+import {ref} from "vue";
 import {S3StorageOptions} from '@/types'
-import CloudStorage from "@/storage/CloudStorage";
+import CloudStorage from "@/storage/CloudStorage"
 
 
 export const s3Provider = ref('')

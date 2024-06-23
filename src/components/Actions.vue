@@ -53,7 +53,7 @@
         <span v-else>选择仓库目录</span>
       </button>
 
-      <button class="btn btn-primary d-flex align-items-center" @click="upload"
+      <button class="btn btn-primary d-flex align-items-center" @click="publish"
               :disabled="checkedFilesCount <= 0 || isPublishing">
         <Loader v-if="isPublishing" class="spin me-1" :size="18"/>
         {{ isPublishing ? `发布中(${s3Provider})` : `开始发布(${s3Provider})` }}
@@ -76,7 +76,7 @@ import {
   showFileSize,
   sort,
   treeNodes,
-  upload,
+  publish,
   vaultName
 } from "@/stores/app";
 import type {SortMethod, TreeItem} from "@/types";

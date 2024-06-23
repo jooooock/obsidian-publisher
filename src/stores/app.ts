@@ -8,7 +8,7 @@ import {
     resolveFileCountInTreeNode,
 } from "@/utils"
 import type {SortMethod, TreeItem, UploadState} from "@/types";
-import {addNewFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
+import {addNewFile, deleteFile, loadCache, publishCache, saveCache} from "@/stores/publish-cache";
 import {loadManifest, publishManifest, saveManifest} from "@/stores/publish-manifest"
 import {initCloudStorage, cloudStorage} from '@/stores/storage-config'
 import {parseMarkdown} from "@/parser"
@@ -21,7 +21,6 @@ export let vaultName = ref('')
 export const hideEmptyDir = ref(false)
 export const showFileSize = ref(false)
 export const sort = ref<SortMethod>('A-Z')
-
 
 
 
@@ -119,7 +118,7 @@ async function convertDirectoryToTreeNodes(rootHandle: FileSystemDirectoryHandle
 // 上传文件
 export const isPublishing = ref(false)
 
-export async function upload() {
+export async function publish() {
     if (!cloudStorage) {
         notification.warning({
             message: '请先进行存储配置',
@@ -130,6 +129,7 @@ export async function upload() {
     isPublishing.value = true
     let canContinue = true
 
+    // 处理上传文件
     for (const fileItem of checkedFiles.value) {
         if (fileItem.uploadState === 'synced') {
             continue
@@ -159,6 +159,35 @@ export async function upload() {
 
             notification.error({
                 message: '文件上传失败',
+                description: e.message,
+            });
+
+            if (e.message.includes('配置') || e.message.includes('Failed to fetch')) {
+                canContinue = false
+                break
+            }
+        }
+    }
+
+    // 处理删除文件
+    for (const fileItem of deleteUploadFiles.value) {
+        fileItem.uploadState = 'uploading'
+
+        try {
+            const file = fileItem.file
+            const path = fileItem.path.join('/')
+            await cloudStorage.deleteObject(path)
+            delete publishManifest[path]
+
+            fileItem.uploadState = ''
+            deleteFile(fileItem)
+        } catch (e: any) {
+            // 删除出错
+            console.error(e)
+            fileItem.uploadState = 'failed'
+
+            notification.error({
+                message: '文件删除失败',
                 description: e.message,
             });
 
@@ -227,3 +256,15 @@ export const syncedFilesCount = computed(() => {
 })
 // 已上传文件占选中文件的百分比
 export const uploadPercent = computed(() => Math.floor(syncedFilesCount.value / checkedFilesCount.value * 100))
+// 新增上传文件数
+export const newUploadFilesCount = computed(() => {
+    return checkedFiles.value.filter(entry => entry.uploadState !== 'dirty' && entry.uploadState !== 'synced').length
+})
+// 要删除的文件列表
+export const deleteUploadFiles = computed(() => {
+    return resolveAllFiles(treeNodes).filter(entry => !entry.checked && (entry.uploadState === 'synced' || entry.uploadState === 'dirty'))
+})
+// 删除上传文件数
+export const deleteUploadFilesCount = computed(() => {
+    return deleteUploadFiles.value.length
+})

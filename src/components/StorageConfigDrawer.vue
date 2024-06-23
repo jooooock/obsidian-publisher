@@ -45,6 +45,11 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item label="Bucket Name" name="bucketName">
+              <a-input v-model:value="form.bucketName" placeholder="输入 Bucket Name" autocomplete="off"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item label="Access Key" name="accessKeyID">
               <a-input v-model:value="form.accessKeyID" placeholder="输入 Access Key" autocomplete="off"/>
             </a-form-item>
@@ -52,11 +57,6 @@
           <a-col :span="12">
             <a-form-item label="Secret Key" name="secretAccessKey">
               <a-input v-model:value="form.secretAccessKey" placeholder="输入 Secret Key" autocomplete="off"/>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="Bucket Name" name="bucketName">
-              <a-input v-model:value="form.bucketName" placeholder="输入 Bucket Name" autocomplete="off"/>
             </a-form-item>
           </a-col>
         </a-row>
@@ -71,6 +71,11 @@
             </a-form-item>
           </a-col>
           <a-col :span="12">
+            <a-form-item label="Bucket Name" name="bucketName">
+              <a-input v-model:value="form.bucketName" placeholder="输入 Bucket Name" autocomplete="off"/>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
             <a-form-item label="Access Key ID" name="accessKeyID">
               <a-input v-model:value="form.accessKeyID" placeholder="输入 Access Key ID" autocomplete="off"/>
             </a-form-item>
@@ -78,11 +83,6 @@
           <a-col :span="12">
             <a-form-item label="Secret Access Key" name="secretAccessKey">
               <a-input v-model:value="form.secretAccessKey" placeholder="输入 Secret Access Key" autocomplete="off"/>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item label="Bucket Name" name="bucketName">
-              <a-input v-model:value="form.bucketName" placeholder="输入 Bucket Name" autocomplete="off"/>
             </a-form-item>
           </a-col>
         </a-row>
