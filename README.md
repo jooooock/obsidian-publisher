@@ -49,6 +49,21 @@
 
 修改相关字段并保存。
 
+
+## FAQ
+
+### 1. 利用该程序上传时需要对存储空间进行跨域的设置
+
+七牛云的设置如下:
+
+![七牛云 cors 设置](assets/qiniu-cors.png)
+
+Cloudflare R2 的设置如下:
+
+![Cloudflare R2 cors 设置](assets/r2-cors.png)
+
+> http://localhost:5173 是方便本地调试，纯线上不需要配这个域。
+
 ## License
 
 MIT
