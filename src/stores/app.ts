@@ -162,7 +162,7 @@ export async function publish() {
                 description: e.message,
             });
 
-            if (e.message.includes('配置') || e.message.includes('Failed to fetch')) {
+            if (e.message.includes('配置') || e.message.includes('Failed to fetch') || e.message.includes('Invalid URL')) {
                 canContinue = false
                 break
             }
@@ -191,7 +191,7 @@ export async function publish() {
                 description: e.message,
             });
 
-            if (e.message.includes('配置') || e.message.includes('Failed to fetch')) {
+            if (e.message.includes('配置') || e.message.includes('Failed to fetch') || e.message.includes('Invalid URL')) {
                 canContinue = false
                 break
             }

@@ -14,11 +14,16 @@ import {readableFileSize} from "@/utils";
 <template>
   <div class="progress-wrapper">
     <a-progress v-if="isPublishing" :percent="uploadPercent" status="active"/>
-    <p class="path d-flex" v-if="uploadingFileEntry">
+    <p class="path d-flex" v-if="isPublishing">
       当前正在上传:
-      <span class="mx-2">({{ syncedFilesCount }} / {{ checkedFilesCount }})</span>
-      <span class="text-info me-2 uploading-filename">{{ uploadingFileEntry.path.join('/') }}</span>
-      <span>({{ readableFileSize(uploadingFileEntry.file.size) }})</span>
+      <template v-if="uploadingFileEntry">
+        <span class="mx-2">({{ syncedFilesCount }} / {{ checkedFilesCount }})</span>
+        <span class="text-info me-2 uploading-filename">{{ uploadingFileEntry.path.join('/') }}</span>
+        <span>({{ readableFileSize(uploadingFileEntry.file.size) }})</span>
+      </template>
+      <template v-else>
+        <span class="text-info me-2 uploading-filename">manifest.json</span>
+      </template>
       <span class="flex-grow-1"></span>
       <span>{{ uploadedFilesSize }} / {{ totalFileSize }}</span>
     </p>
