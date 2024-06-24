@@ -95,7 +95,7 @@ export interface SiteOptions {
 
 // 云存储配置
 export interface S3StorageOptions {
-    provider: 'qiniu' | 'R2' | null
+    provider: 'qiniu' | 'r2' | 'custom'
 
     region: string
     endpoint: string

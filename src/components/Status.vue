@@ -13,7 +13,7 @@ function formatLastPublishTime(timestamp: number) {
     <span class="mx-2 a-text-info">已选: {{ checkedFilesCount }} / {{ totalFilesCount }}，共 {{
         totalFileSize
       }}</span>
-    <span class="a-text-info">(新增: {{newUploadFilesCount}}, 删除: {{deleteUploadFilesCount}})</span>
+    <span class="a-text-info">( <span class="text-success">新增: {{newUploadFilesCount}}</span>, <span class="text-danger">删除: {{deleteUploadFilesCount}}</span>)</span>
     <span class="a-text-info ms-3">上次发布时间: {{ formatLastPublishTime(publishCache.lastPublishAt) }}</span>
   </div>
 </template>

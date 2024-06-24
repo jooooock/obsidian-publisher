@@ -15,24 +15,14 @@ export default class CloudStorage {
 
 
     constructor(options: S3StorageOptions) {
-        let region = ''
-        let endpoint = ''
-        if (options.provider === 'qiniu') {
-            region = options.region
-            endpoint = `https://s3.${options.region}.qiniucs.com`
-        } else if (options.provider === 'R2') {
-            region = 'auto'
-            endpoint = `https://${options.accountID}.r2.cloudflarestorage.com`
-        }
-
-        if (!region || !endpoint || !options.accessKeyID || !options.secretAccessKey) {
+        if (!options.region || !options.endpoint || !options.accessKeyID || !options.secretAccessKey) {
             throw new Error('options配置不正确')
         }
 
         this.options = options
         this.s3 = new S3Client({
-            region: region,
-            endpoint: endpoint,
+            region: options.region,
+            endpoint: options.endpoint,
             credentials: {
                 accessKeyId: options.accessKeyID,
                 secretAccessKey: options.secretAccessKey,
