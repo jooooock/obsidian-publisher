@@ -15,10 +15,11 @@
 
 浏览器访问 https://publisher.deno.dev, 选择打开指定的 Obsidian 仓库目录
 
-> [!WARNING]
+> [!NOTE]
 > 该网站程序利用了浏览器的 [File and Directory Entries API](https://developer.mozilla.org/en-US/docs/Web/API/File_and_Directory_Entries_API)，所以需要明确授权该网站访问指定的目录权限。
 > 
 > 比如，出现下面这样的弹窗时，请选择同意：
+> 
 > ![grant permission](assets/grant-permission.png)
 
 打开之后的界面显示如下：
