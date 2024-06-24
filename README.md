@@ -41,6 +41,14 @@
 ![select file and publish](assets/publish.png)
 
 
+### 第四步：配置网站
+
+通过顶部的【网站配置】按钮打开【网站配置弹框】，如下：
+
+![site config](assets/site-config.png)
+
+修改相关字段并保存。
+
 ## License
 
 MIT
