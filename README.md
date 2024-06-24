@@ -64,6 +64,9 @@ Cloudflare R2 的设置如下:
 
 > http://localhost:5173 是方便本地调试，纯线上不需要配这个域。
 
+### 2. 如果有使用上或者配置上的任何问题，欢迎在 Issue 区讨论
+
+
 ## License
 
 MIT
