@@ -226,6 +226,17 @@ export async function publish() {
 }
 
 
+export async function parse() {
+    for (const entry of checkedMarkdownFiles.value) {
+        console.log(entry.path.join('/'))
+        const content = await readTextFileContent(entry.file)
+        console.log(content)
+        debugger
+        const nodes = parseMarkdown(content)
+        console.log(nodes)
+    }
+}
+
 // 仓库中的总文件数
 export const totalFilesCount = computed(() => {
     return resolveAllFiles(treeNodes).length
@@ -267,4 +278,8 @@ export const deleteUploadFiles = computed(() => {
 // 删除上传文件数
 export const deleteUploadFilesCount = computed(() => {
     return deleteUploadFiles.value.length
+})
+// 选中的 markdown 文件
+export const checkedMarkdownFiles = computed(() => {
+    return checkedFiles.value.filter(entry => entry.name.endsWith('.md'))
 })

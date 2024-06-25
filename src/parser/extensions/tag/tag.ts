@@ -23,7 +23,7 @@ export function tag() {
             effects.enter('tag')
             effects.enter('tagMarker')
 
-            return consumeMarker
+            return consumeMarker(code)
         }
 
         /**
@@ -31,7 +31,7 @@ export function tag() {
          */
         function consumeMarker(code: Code) {
             if (String.fromCharCode(code as number) !== startMarker) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
@@ -57,13 +57,13 @@ export function tag() {
             }
 
             if (!hasNonNumericChars) {
-                return nok
+                return nok(code)
             }
 
             effects.exit('tagData')
             effects.exit('tag')
 
-            return ok
+            return ok(code)
         }
     }
 

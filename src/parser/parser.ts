@@ -50,17 +50,17 @@ function convertFrontmatter(root: any, result: Record<string, any>, _source: str
             if (typeof value === 'string') {
                 value = value.trim()
                 if (/^\[\[.+]]$/.test(value)) {
-                    const idx = value.findIndex('|')
+                    const idx = (value as string).indexOf('|')
                     let link, displayText
                     if (idx === -1) {
                         // 没有 | 字符
-                        link = displayText = value.substring(2, -2)
+                        link = displayText = value.slice(2, -2)
                     } else if (idx !== 2) {
-                        link = value.substring(2, idx)
-                        displayText = value.substring(idx, -2)
+                        link = value.slice(2, idx)
+                        displayText = value.slice(idx, -2)
                     } else {
-                        displayText = value.substring(2, -2)
-                        link = value.substring(idx, -2)
+                        displayText = value.slice(2, -2)
+                        link = value.slice(idx, -2)
                     }
                     frontmatterLinks.push({
                         key: key,
@@ -271,16 +271,16 @@ export function parseMarkdown(source: string): ParseResult {
         extensions: [
             gfm(),
             frontmatter(['yaml']),
-            // wikiLink(),
-            // wikiEmbed(),
-            // tag(),
+            wikiLink(),
+            wikiEmbed(),
+            tag(),
         ],
         mdastExtensions: [
             gfmFromMarkdown(),
             frontmatterFromMarkdown(['yaml']),
-            // wikiLinkFromMarkdown(),
-            // wikiEmbedFromMarkdown(),
-            // tagFromMarkdown(),
+            wikiLinkFromMarkdown(),
+            wikiEmbedFromMarkdown(),
+            tagFromMarkdown(),
         ]
     })
 

@@ -38,18 +38,21 @@
       </a-tooltip>
 
       <!-- 存储配置-->
-      <StorageConfigDrawer />
+      <StorageConfigDrawer/>
 
       <!-- 网站配置-->
-      <SiteConfigDrawer />
+      <SiteConfigDrawer/>
     </div>
 
 
     <div class="flex-grow-1"></div>
 
     <div class="d-flex align-items-center">
+<!--      <button class="btn btn-secondary btn-markdown-parse" @click="parse">解析markdown</button>-->
       <button class="btn btn-light mx-2" @click="selectDirectory" :disabled="isPublishing">
-        <span v-if="vaultName">当前选择仓库: {{ vaultName }}</span>
+        <p v-if="vaultName" class="m-0 d-flex align-items-center">当前选择仓库: <span class="vaultName">{{
+            vaultName
+          }}</span></p>
         <span v-else>选择仓库目录</span>
       </button>
 
@@ -72,11 +75,12 @@ import {
   checkedFilesCount,
   hideEmptyDir,
   isPublishing,
+  parse,
+  publish,
   selectDirectory,
   showFileSize,
   sort,
   treeNodes,
-  publish,
   vaultName
 } from "@/stores/app";
 import type {SortMethod, TreeItem} from "@/types";
@@ -165,10 +169,25 @@ function updateAllDirectoryCheckState() {
 .hover-gray:hover {
   background: lightgray;
 }
+
+.vaultName {
+  display: inline-block;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 992px) {
   .actions {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-markdown-parse {
+    display: none;
   }
 }
 </style>

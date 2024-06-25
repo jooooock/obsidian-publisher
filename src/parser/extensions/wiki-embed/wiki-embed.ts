@@ -30,13 +30,13 @@ export function wikiEmbed() {
          */
         function start(code: Code) {
             if (code !== startMarker.charCodeAt(startMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.enter('wikiEmbed')
             effects.enter('wikiEmbedMarker')
 
-            return consumeStart
+            return consumeStart(code)
         }
 
         /**
@@ -45,11 +45,11 @@ export function wikiEmbed() {
         function consumeStart(code: Code) {
             if (startMarkerCursor === startMarker.length) {
                 effects.exit('wikiEmbedMarker')
-                return consumeData
+                return consumeData(code)
             }
 
             if (code !== startMarker.charCodeAt(startMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
@@ -63,13 +63,13 @@ export function wikiEmbed() {
          */
         function consumeData(code: Code) {
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             effects.enter('wikiEmbedData')
             effects.enter('wikiEmbedTarget')
 
-            return consumeTarget
+            return consumeTarget(code)
         }
 
         /**
@@ -78,27 +78,27 @@ export function wikiEmbed() {
         function consumeTarget(code: Code) {
             if (code === aliasMarker.charCodeAt(aliasCursor)) {
                 if (!hasTarget) {
-                    return nok
+                    return nok(code)
                 }
 
                 effects.exit('wikiEmbedTarget')
                 effects.enter('wikiEmbedAliasMarker')
-                return consumeAliasMarker
+                return consumeAliasMarker(code)
             }
 
             if (code === endMarker.charCodeAt(endMarkerCursor)) {
                 if (!hasTarget) {
-                    return nok
+                    return nok(code)
                 }
 
                 effects.exit('wikiEmbedTarget')
                 effects.exit('wikiEmbedData')
                 effects.enter('wikiEmbedMarker')
-                return consumeEnd
+                return consumeEnd(code)
             }
 
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             if (!markdownLineEndingOrSpace(code)) {
@@ -117,11 +117,11 @@ export function wikiEmbed() {
             if (aliasCursor === aliasMarker.length) {
                 effects.exit('wikiEmbedAliasMarker')
                 effects.enter('wikiEmbedAlias')
-                return consumeAlias
+                return consumeAlias(code)
             }
 
             if (code !== aliasMarker.charCodeAt(aliasCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
@@ -136,16 +136,16 @@ export function wikiEmbed() {
         function consumeAlias(code: Code) {
             if (code === endMarker.charCodeAt(endMarkerCursor)) {
                 if (!hasAlias) {
-                    return nok
+                    return nok(code)
                 }
                 effects.exit('wikiEmbedAlias')
                 effects.exit('wikiEmbedData')
                 effects.enter('wikiEmbedMarker')
-                return consumeEnd
+                return consumeEnd(code)
             }
 
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             if (!markdownLineEndingOrSpace(code)) {
@@ -164,11 +164,11 @@ export function wikiEmbed() {
             if (endMarkerCursor === endMarker.length) {
                 effects.exit('wikiEmbedMarker')
                 effects.exit('wikiEmbed')
-                return ok
+                return ok(code)
             }
 
             if (code !== endMarker.charCodeAt(endMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)

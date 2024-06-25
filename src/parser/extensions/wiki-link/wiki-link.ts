@@ -10,8 +10,6 @@ import type {Code, State, Effects, Extension} from 'micromark-util-types'
  * 解析 `[[dest|alias]]` 语法
  */
 export function wikiLink(): Extension {
-    debugger
-
     const aliasMarker = '|'
     const startMarker = '[['
     const endMarker = ']]'
@@ -29,29 +27,24 @@ export function wikiLink(): Extension {
 
 
         function start(code: Code) {
-            debugger
-
             if (code !== startMarker.charCodeAt(startMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.enter('wikiLink')
             effects.enter('wikiLinkMarker')
-            effects.consume(code)
 
-            return consumeStart
+            return consumeStart(code)
         }
 
         function consumeStart(code: Code) {
-            debugger
-
             if (startMarkerCursor === startMarker.length) {
                 effects.exit('wikiLinkMarker')
-                return consumeData
+                return consumeData(code)
             }
 
             if (code !== startMarker.charCodeAt(startMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
@@ -61,44 +54,40 @@ export function wikiLink(): Extension {
         }
 
         function consumeData(code: Code) {
-            debugger
-
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             effects.enter('wikiLinkData')
             effects.enter('wikiLinkTarget')
 
-            return consumeTarget
+            return consumeTarget(code)
         }
 
         function consumeTarget(code: Code) {
-            debugger
-
             if (code === aliasMarker.charCodeAt(aliasCursor)) {
                 if (!hasTarget) {
-                    return nok
+                    return nok(code)
                 }
 
                 effects.exit('wikiLinkTarget')
                 effects.enter('wikiLinkAliasMarker')
-                return consumeAliasMarker
+                return consumeAliasMarker(code)
             }
 
             if (code === endMarker.charCodeAt(endMarkerCursor)) {
                 if (!hasTarget) {
-                    return nok
+                    return nok(code)
                 }
 
                 effects.exit('wikiLinkTarget')
                 effects.exit('wikiLinkData')
                 effects.enter('wikiLinkMarker')
-                return consumeEnd
+                return consumeEnd(code)
             }
 
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             if (!markdownLineEndingOrSpace(code)) {
@@ -111,16 +100,14 @@ export function wikiLink(): Extension {
         }
 
         function consumeAliasMarker(code: Code) {
-            debugger
-
             if (aliasCursor === aliasMarker.length) {
                 effects.exit('wikiLinkAliasMarker')
                 effects.enter('wikiLinkAlias')
-                return consumeAlias
+                return consumeAlias(code)
             }
 
             if (code !== aliasMarker.charCodeAt(aliasCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
@@ -130,20 +117,18 @@ export function wikiLink(): Extension {
         }
 
         function consumeAlias(code: Code) {
-            debugger
-
             if (code === endMarker.charCodeAt(endMarkerCursor)) {
                 if (!hasAlias) {
-                    return nok
+                    return nok(code)
                 }
                 effects.exit('wikiLinkAlias')
                 effects.exit('wikiLinkData')
                 effects.enter('wikiLinkMarker')
-                return consumeEnd
+                return consumeEnd(code)
             }
 
             if (markdownLineEnding(code) || code === codes.eof) {
-                return nok
+                return nok(code)
             }
 
             if (!markdownLineEndingOrSpace(code)) {
@@ -156,16 +141,14 @@ export function wikiLink(): Extension {
         }
 
         function consumeEnd(code: Code) {
-            debugger
-
             if (endMarkerCursor === endMarker.length) {
                 effects.exit('wikiLinkMarker')
                 effects.exit('wikiLink')
-                return ok
+                return ok(code)
             }
 
             if (code !== endMarker.charCodeAt(endMarkerCursor)) {
-                return nok
+                return nok(code)
             }
 
             effects.consume(code)
