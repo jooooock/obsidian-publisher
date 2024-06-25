@@ -17,9 +17,9 @@ export function tag() {
         return start
 
         /**
-         * @param {Code} _code
+         * @param {Code} code
          */
-        function start(_code: Code) {
+        function start(code: Code) {
             effects.enter('tag')
             effects.enter('tagMarker')
 
