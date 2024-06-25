@@ -3,14 +3,16 @@ import {
     DeleteObjectsCommand,
     HeadObjectCommand,
     PutObjectCommand,
+    GetObjectCommand,
     S3Client
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {S3StorageOptions} from "@/types";
 import mime from 'mime'
 
 
 export default class CloudStorage {
-    private s3: S3Client
+    private readonly s3: S3Client
     private options: S3StorageOptions
 
 
@@ -41,6 +43,15 @@ export default class CloudStorage {
                 Key: key,
             })
         )
+    }
+
+    async getAccessURL(key: string) {
+        return await getSignedUrl(this.s3, new GetObjectCommand({
+            Bucket: this.options.bucketName,
+            Key: key,
+        }), {
+            expiresIn: 3600,
+        })
     }
 
     /**
