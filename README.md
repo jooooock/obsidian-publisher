@@ -11,7 +11,40 @@
 
 ## 如何使用？
 
-### 第一步：选择需要发布的 Obsidian 仓库根目录
+### 第一步: 准备云存储空间
+
+可以申请免费的云存储空间，这里以七牛云和 Cloudflare R2 为例来演示：
+
+#### 1. 七牛云空间的创建
+
+创建一个七牛云空间，访问控制需要选【公开】，如下所示:
+![创建七牛云空间](assets/create-qiniu-bucket.png)
+
+然后在空间设置里新增跨域规则，如下所示:
+![七牛云跨域规则](assets/qiniu-bucket-cors.png)
+
+`Access Key`和`Secret Key`可通过密钥管理处获取:
+![七牛云的密钥管理](assets/qiniu-ak-sk.png)
+
+
+#### 2. Cloudflare R2 存储桶的创建
+
+创建一个 R2 存储桶，如下所示:
+![创建R2存储桶](assets/r2-create-bucket.png)
+
+然后在桶的设置中新增 CORS 策略，如下所示:
+![img_4.png](assets/r2-cors-1.png)
+![img_9.png](assets/r2-cors-2.png)
+
+`Access Key`和`Secret Key`可通过管理 R2 API 令牌来创建:
+![管理 R2 API 令牌](assets/r2-ak-sk-1.png)
+
+![创建 API 令牌](assets/r2-ak-sk-2.png)
+
+![R2 密钥](assets/r2-ak-sk-3.png)
+
+
+### 第二步: 选择需要发布的 Obsidian 仓库根目录
 
 浏览器访问 https://publisher.deno.dev, 选择打开指定的 Obsidian 仓库目录
 
@@ -27,44 +60,27 @@
 ![main ui](assets/main-ui.png)
 
 
-### 第二步：配置存储服务
+### 第三步: 配置存储空间
 
 通过顶部的【存储配置】按钮打开【存储配置弹框】，如下：
 
 ![s3 config](assets/s3-config.png)
 
-将对应字段填入并保存。
+将第一步创建的空间对应字段填入并保存。
 
 
-### 第三步：选择文件并发布
+### 第四步: 选择文件并发布
 
 ![select file and publish](assets/publish.png)
 
 
-### 第四步：配置网站
+### 第五步: 配置网站
 
 通过顶部的【网站配置】按钮打开【网站配置弹框】，如下：
 
 ![site config](assets/site-config.png)
 
 修改相关字段并保存。
-
-
-## FAQ
-
-### 1. 利用该程序上传时需要对存储空间进行跨域的设置
-
-七牛云的设置如下:
-
-![七牛云 cors 设置](assets/qiniu-cors.png)
-
-Cloudflare R2 的设置如下:
-
-![Cloudflare R2 cors 设置](assets/r2-cors.png)
-
-> http://localhost:5173 是方便本地调试，纯线上不需要配这个域。
-
-### 2. 如果有使用上或者配置上的任何问题，欢迎在 Issue 区讨论
 
 
 ## License
